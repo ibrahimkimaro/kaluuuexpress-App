@@ -9,10 +9,9 @@ import 'package:flutter/foundation.dart';
 /// Handles all API requests with automatic token management
 class ApiService {
   // Base URL - Change this to your production URL
-  static const String baseUrl =
-      'http://192.168.1.154:8000'; // For Android Emulator
+  static const String baseUrl = 'http://157.245.227.236'; // Production Server
+  // static const String baseUrl = 'http://192.168.1.154:8000'; // For Android Emulator
   // static const String baseUrl = 'http://localhost:8000'; // For iOS Simulator
-  // static const String baseUrl = 'https://api.kaluuexpress.com'; // Production
 
   static const String apiPrefix = '/api/auth';
 

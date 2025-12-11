@@ -125,19 +125,23 @@ class _CalculatorState extends State<Calculator>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Calculate Shipping Cost',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1565C0),
+        backgroundColor: colorScheme.primary,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: colorScheme.onPrimary),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _errorMessage != null
           ? Center(
               child: Column(
@@ -145,11 +149,15 @@ class _CalculatorState extends State<Calculator>
                 children: [
                   Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: colorScheme.error),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _fetchShippingConfig,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                    ),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -162,13 +170,15 @@ class _CalculatorState extends State<Calculator>
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
+                        colors: isDark
+                          ? [colorScheme.primary, colorScheme.primaryContainer]
+                          : [const Color(0xFF1565C0), const Color(0xFF0D47A1)],
                       ),
-                      borderRadius: BorderRadius.only(
+                      borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(30),
                         bottomRight: Radius.circular(30),
                       ),
@@ -219,22 +229,24 @@ class _CalculatorState extends State<Calculator>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Service Tier Selection
-                          const Text(
+                          Text(
                             'Service Tier',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A237E),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 12),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: isDark
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.black.withOpacity(0.05),
                                   spreadRadius: 1,
                                   blurRadius: 10,
                                 ),
@@ -252,6 +264,7 @@ class _CalculatorState extends State<Calculator>
                                 return Column(
                                   children: [
                                     _buildRadioTile(
+                                      context,
                                       tier['name'],
                                       tier['description'],
                                       '\$${tier['price_per_kg_usd']}/kg',
@@ -261,7 +274,7 @@ class _CalculatorState extends State<Calculator>
                                             _selectedServiceTier = tier['name'],
                                       ),
                                     ),
-                                    if (!isLast) const Divider(height: 1),
+                                    if (!isLast) Divider(height: 1, color: colorScheme.outlineVariant),
                                   ],
                                 );
                               }).toList(),
@@ -271,22 +284,24 @@ class _CalculatorState extends State<Calculator>
                           const SizedBox(height: 24),
 
                           // Weight Handling Selection
-                          const Text(
+                          Text(
                             'Weight Handling',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A237E),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 12),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: isDark
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.black.withOpacity(0.05),
                                   spreadRadius: 1,
                                   blurRadius: 10,
                                 ),
@@ -304,6 +319,7 @@ class _CalculatorState extends State<Calculator>
                                 return Column(
                                   children: [
                                     _buildRadioTile(
+                                      context,
                                       handling['name'],
                                       handling['description'],
                                       '${(handling['rate_tsh_per_kg'] as num).toInt()} TSh/kg',
@@ -314,7 +330,7 @@ class _CalculatorState extends State<Calculator>
                                             handling['name'],
                                       ),
                                     ),
-                                    if (!isLast) const Divider(height: 1),
+                                    if (!isLast) Divider(height: 1, color: colorScheme.outlineVariant),
                                   ],
                                 );
                               }).toList(),
@@ -324,22 +340,24 @@ class _CalculatorState extends State<Calculator>
                           const SizedBox(height: 24),
 
                           // Shipment Weight Input
-                          const Text(
+                          Text(
                             'Shipment Weight',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A237E),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 12),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: isDark
+                                    ? Colors.black.withOpacity(0.2)
+                                    : Colors.black.withOpacity(0.05),
                                   spreadRadius: 1,
                                   blurRadius: 10,
                                 ),
@@ -351,19 +369,22 @@ class _CalculatorState extends State<Calculator>
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
                                   ),
+                              style: TextStyle(color: colorScheme.onSurface),
                               decoration: InputDecoration(
                                 hintText: 'Enter weight',
+                                hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
                                 suffixText: 'kg',
-                                prefixIcon: const Icon(
+                                suffixStyle: TextStyle(color: colorScheme.onSurface),
+                                prefixIcon: Icon(
                                   Icons.scale,
-                                  color: Color(0xFF1565C0),
+                                  color: colorScheme.primary,
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
                                   borderSide: BorderSide.none,
                                 ),
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: theme.cardColor,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 16,
@@ -393,7 +414,8 @@ class _CalculatorState extends State<Calculator>
                             child: ElevatedButton(
                               onPressed: _calculateCost,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFB71C1C),
+                                backgroundColor: colorScheme.error,
+                                foregroundColor: colorScheme.onError,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
@@ -402,14 +424,13 @@ class _CalculatorState extends State<Calculator>
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.calculate, color: Colors.white),
+                                  Icon(Icons.calculate),
                                   SizedBox(width: 12),
                                   Text(
                                     'CALCULATE COST',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
@@ -427,20 +448,17 @@ class _CalculatorState extends State<Calculator>
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
+                                  gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF1565C0),
-                                      Color(0xFF0D47A1),
-                                    ],
+                                    colors: isDark
+                                      ? [colorScheme.primary, colorScheme.primaryContainer]
+                                      : [const Color(0xFF1565C0), const Color(0xFF0D47A1)],
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(
-                                        0xFF1565C0,
-                                      ).withOpacity(0.3),
+                                      color: colorScheme.primary.withOpacity(0.3),
                                       spreadRadius: 2,
                                       blurRadius: 15,
                                       offset: const Offset(0, 5),
@@ -563,10 +581,10 @@ class _CalculatorState extends State<Calculator>
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(15),
                               border: Border.all(
-                                color: const Color(0xFF1565C0).withOpacity(0.3),
+                                color: colorScheme.primary.withOpacity(0.3),
                               ),
                             ),
                             child: Column(
@@ -574,17 +592,17 @@ class _CalculatorState extends State<Calculator>
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.info_outline,
-                                      color: Color(0xFF1565C0),
+                                      color: colorScheme.primary,
                                     ),
                                     const SizedBox(width: 8),
-                                    const Text(
+                                    Text(
                                       'Calculation Formula',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1A237E),
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -594,7 +612,7 @@ class _CalculatorState extends State<Calculator>
                                   'Total Cost = Weight (kg) × Exchange Rate (TSh/kg) × Base Rate (\$/kg)',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[700],
+                                    color: colorScheme.onSurface.withOpacity(0.7),
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -612,12 +630,16 @@ class _CalculatorState extends State<Calculator>
   }
 
   Widget _buildRadioTile(
+    BuildContext context,
     String title,
     String subtitle,
     String price,
     bool isSelected,
     VoidCallback onTap,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
@@ -632,8 +654,8 @@ class _CalculatorState extends State<Calculator>
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF1565C0)
-                      : Colors.grey[400]!,
+                      ? colorScheme.primary
+                      : colorScheme.outline,
                   width: 2,
                 ),
               ),
@@ -642,9 +664,9 @@ class _CalculatorState extends State<Calculator>
                       child: Container(
                         width: 12,
                         height: 12,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Color(0xFF1565C0),
+                          color: colorScheme.primary,
                         ),
                       ),
                     )
@@ -663,14 +685,14 @@ class _CalculatorState extends State<Calculator>
                           ? FontWeight.bold
                           : FontWeight.w500,
                       color: isSelected
-                          ? const Color(0xFF1565C0)
-                          : Colors.black87,
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withOpacity(0.6)),
                   ),
                 ],
               ),
@@ -680,7 +702,7 @@ class _CalculatorState extends State<Calculator>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? const Color(0xFFB71C1C) : Colors.grey[700],
+                color: isSelected ? colorScheme.error : colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ],

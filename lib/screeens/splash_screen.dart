@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shippng_management_app/screeens/onboarding.dart';
-import 'package:shippng_management_app/auths/login.dart';
+import 'package:shippng_management_app/auths/register.dart';
 import 'package:shippng_management_app/screeens/screenNavigation.dart';
 import 'package:shippng_management_app/auths/api_service.dart';
 
@@ -60,19 +60,18 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (!hasSeenOnboarding) {
-      // Show onboarding
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
     } else if (apiService.isAuthenticated) {
-      // User is logged in
+      // User is authenticated - go to main app
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomeScreeenNav()),
       );
     } else {
-      // Show login
+      // User is NOT authenticated - go to Register page
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => const RegisterPage()),
       );
     }
   }
@@ -85,17 +84,27 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0EA5E9),
-              const Color(0xFF0284C7),
-              const Color(0xFF0369A1),
-            ],
+            colors: isDark
+                ? [
+                    colorScheme.primaryContainer,
+                    colorScheme.primary.withOpacity(0.8),
+                    colorScheme.primaryContainer,
+                  ]
+                : [
+                    colorScheme.primary,
+                    colorScheme.primary.withOpacity(0.8),
+                    colorScheme.primaryContainer,
+                  ],
           ),
         ),
         child: Center(
@@ -111,11 +120,11 @@ class _SplashScreenState extends State<SplashScreen>
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: colorScheme.shadow.withOpacity(0.2),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -125,6 +134,13 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Image.asset(
                       'assets/images/logo.png',
                       fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.local_shipping_rounded,
+                          size: 80,
+                          color: colorScheme.primary,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -133,12 +149,12 @@ class _SplashScreenState extends State<SplashScreen>
               // Company Name
               FadeTransition(
                 opacity: _fadeAnimation,
-                child: const Text(
+                child: Text(
                   'KALUU',
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: colorScheme.onPrimary,
                     letterSpacing: 8,
                   ),
                 ),
@@ -146,11 +162,11 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 12),
               FadeTransition(
                 opacity: _fadeAnimation,
-                child: const Text(
+                child: Text(
                   'EXPRESS CARGO',
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.white,
+                    color: colorScheme.onPrimary.withOpacity(0.9),
                     letterSpacing: 4,
                     fontWeight: FontWeight.w300,
                   ),
@@ -165,7 +181,7 @@ class _SplashScreenState extends State<SplashScreen>
                   height: 40,
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.8),
+                      colorScheme.onPrimary.withOpacity(0.8),
                     ),
                     strokeWidth: 3,
                   ),

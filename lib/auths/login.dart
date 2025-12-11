@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shippng_management_app/auths/auth_controller.dart';
 import 'package:shippng_management_app/auths/register.dart';
-import 'package:shippng_management_app/screeens/homePage.dart';
 import 'package:shippng_management_app/screeens/screenNavigation.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,7 +17,6 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,15 +39,25 @@ class _LoginPageState extends State<LoginPage> {
 
       if (mounted) {
         if (success) {
-          // Navigate to home page
-          Navigator.pushReplacementNamed(context, '/homePage');
+          Fluttertoast.showToast(
+            msg: 'Login successful! Welcome back.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.TOP,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreeenNav()),
+            (route) => false,
+          );
         } else {
-          // Show error message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authController.errorMessage ?? 'Login failed'),
-              backgroundColor: Colors.red,
-            ),
+          Fluttertoast.showToast(
+            msg: authController.errorMessage ?? 'Login failed. Please try again.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.TOP,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
           );
         }
       }
@@ -168,12 +177,28 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 2,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: colorScheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: colorScheme.error,
+                                width: 2,
+                              ),
+                            ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter your email';
-                            if (!value.contains('@'))
+                            }
+                            if (!value.contains('@')) {
                               return 'Please enter a valid email';
+                            }
                             return null;
                           },
                         ),
@@ -221,12 +246,28 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 2,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: colorScheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: colorScheme.error,
+                                width: 2,
+                              ),
+                            ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter your password';
-                            if (value.length < 6)
+                            }
+                            if (value.length < 6) {
                               return 'Password must be at least 6 characters';
+                            }
                             return null;
                           },
                         ),
@@ -238,6 +279,11 @@ class _LoginPageState extends State<LoginPage> {
                           child: TextButton(
                             onPressed: () {
                               // TODO: Navigate to forgot password
+                              Fluttertoast.showToast(
+                                msg: 'Forgot password feature coming soon',
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                              );
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: colorScheme.primary,
@@ -248,38 +294,42 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 24),
 
                         // Login Button
-                        SizedBox(
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _handleLogin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colorScheme.primary,
-                              foregroundColor: colorScheme.onPrimary,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: _isLoading
-                                ? SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        colorScheme.onPrimary,
-                                      ),
-                                    ),
-                                  )
-                                : const Text(
-                                    'LOGIN',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1,
-                                    ),
+                        Consumer<AuthController>(
+                          builder: (context, auth, child) {
+                            return SizedBox(
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: auth.isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: colorScheme.onPrimary,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                          ),
+                                ),
+                                child: auth.isLoading
+                                    ? SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            colorScheme.onPrimary,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'LOGIN',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -300,7 +350,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RegisterPage(),
+                            builder: (context) => const RegisterPage(),
                           ),
                         );
                       },
