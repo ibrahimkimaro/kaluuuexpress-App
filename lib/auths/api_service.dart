@@ -153,6 +153,7 @@ class ApiService {
   }
 
   /// Handle API response
+  /// Handle API response
   ApiResponse _handleResponse(http.Response response) {
     if (kDebugMode) {
       print('Response Status: ${response.statusCode}');
@@ -162,18 +163,57 @@ class ApiService {
     try {
       final data = jsonDecode(response.body);
 
+      // Success case
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return ApiResponse.success(data);
-      } else {
-        return ApiResponse.error(
-          data['error'] ?? data['message'] ?? 'Unknown error',
-          statusCode: response.statusCode,
-          data: data,
-        );
       }
-    } catch (e) {
+
+      // Error case - extract error message from various possible formats
+      String? errorMessage;
+
+      // Format 1: Direct error field
+      if (data['error'] != null) {
+        errorMessage = data['error'].toString();
+      }
+      // Format 2: Message field
+      else if (data['message'] != null) {
+        errorMessage = data['message'].toString();
+      }
+      // Format 3: Detail field (common in Django REST Framework)
+      else if (data['detail'] != null) {
+        errorMessage = data['detail'].toString();
+      }
+      // Format 4: Email field errors (common for registration)
+      else if (data['email'] != null && data['email'] is List) {
+        errorMessage = data['email'].first?.toString();
+      }
+      // Format 5: Phone number field errors
+      else if (data['phone_number'] != null && data['phone_number'] is List) {
+        errorMessage = data['phone_number'].first?.toString();
+      }
+      // Format 6: Password field errors
+      else if (data['password'] != null && data['password'] is List) {
+        errorMessage = data['password'].first?.toString();
+      }
+      // Format 7: Non-field errors
+      else if (data['non_field_errors'] != null &&
+          data['non_field_errors'] is List) {
+        errorMessage = data['non_field_errors'].first?.toString();
+      }
+      // Format 8: Generic error message
+      else {
+        errorMessage = 'Request failed with status ${response.statusCode}';
+      }
+
       return ApiResponse.error(
-        'Failed to parse response',
+        errorMessage ?? 'Unknown error',
+        statusCode: response.statusCode,
+        data: data,
+      );
+    } catch (e) {
+      // If response is not JSON or empty
+      return ApiResponse.error(
+        response.body.isNotEmpty ? response.body : 'Failed to parse response',
         statusCode: response.statusCode,
       );
     }
@@ -512,11 +552,12 @@ class ApiService {
   /// Update user profile
   Future<ApiResponse> updateProfile({
     String? fullName,
+    String? email,
     String? phoneNumber,
     String? address,
     String? city,
     String? country,
-    String? postalCode,
+    String? profile_picture,
   }) async {
     final body = <String, dynamic>{};
     if (fullName != null) body['full_name'] = fullName;
@@ -524,9 +565,70 @@ class ApiService {
     if (address != null) body['address'] = address;
     if (city != null) body['city'] = city;
     if (country != null) body['country'] = country;
-    if (postalCode != null) body['postal_code'] = postalCode;
 
-    return await patch('$apiPrefix/profile/', body: body);
+    // If no profile picture or profile_picture is not a valid file path, send JSON PATCH
+    if (profile_picture == null || profile_picture.isEmpty) {
+      return await patch('$apiPrefix/profile/', body: body);
+    }
+
+    // If profile_picture looks like a local file path, send multipart/form-data PATCH
+    try {
+      final file = File(profile_picture);
+      if (!file.existsSync()) {
+        // If the provided path is not a file, fall back to JSON PATCH including the string value
+        body['profile_picture'] = profile_picture;
+        return await patch('$apiPrefix/profile/', body: body);
+      }
+
+      final uri = Uri.parse('$baseUrl$apiPrefix/profile/');
+
+      if (kDebugMode) {
+        print('PATCH Multipart Request: $uri');
+        print('Fields: $body');
+        print('File: ${file.path}');
+      }
+
+      // Build multipart request with PATCH method
+      final request = http.MultipartRequest('PATCH', uri);
+
+      // Add auth header only (do not set Content-Type - MultipartRequest will set it)
+      if (_accessToken != null) {
+        request.headers['Authorization'] = 'Bearer $_accessToken';
+      }
+      request.headers['Accept'] = 'application/json';
+
+      // Add fields
+      body.forEach((k, v) => request.fields[k] = v.toString());
+
+      // Add file
+      final multipartFile = await http.MultipartFile.fromPath(
+        'profile_picture',
+        file.path,
+      );
+      request.files.add(multipartFile);
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // If unauthorized, try refresh and retry once
+      if (response.statusCode == 401 && await _refreshAccessToken()) {
+        // retry with refreshed token
+        if (_accessToken != null)
+          request.headers['Authorization'] = 'Bearer $_accessToken';
+        final retryStream = await request.send().timeout(timeout);
+        final retryResp = await http.Response.fromStream(retryStream);
+        return _handleResponse(retryResp);
+      }
+
+      return _handleResponse(response);
+    } on SocketException {
+      return ApiResponse.error('No internet connection');
+    } on TimeoutException {
+      return ApiResponse.error('Request timeout');
+    } catch (e) {
+      if (kDebugMode) print('Multipart PATCH error: $e');
+      return ApiResponse.error('Network error: $e');
+    }
   }
 
   /// Change password

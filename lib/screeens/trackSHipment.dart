@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shippng_management_app/auths/api_service.dart';
+import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
 import 'package:intl/intl.dart';
 
 class TrackingShipment extends StatefulWidget {
@@ -146,24 +146,29 @@ class _TrackingShipmentState extends State<TrackingShipment> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final filteredShipments = _shipments.where((shipment) {
-      if (_selectedFilter != 'all' && shipment['status'] != _selectedFilter) {
-        return false;
-      }
-      if (_searchController.text.isNotEmpty) {
-        return shipment['tracking_code'].toString().toLowerCase().contains(
-          _searchController.text.toLowerCase(),
-        );
-      }
-      return true;
-    }).toList();
+    final filteredShipments =
+        _shipments.where((shipment) {
+          if (_selectedFilter != 'all' &&
+              shipment['status'] != _selectedFilter) {
+            return false;
+          }
+          if (_searchController.text.isNotEmpty) {
+            return shipment['tracking_code'].toString().toLowerCase().contains(
+              _searchController.text.toLowerCase(),
+            );
+          }
+          return true;
+        }).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Track Shipments',
-          style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onPrimary,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
@@ -171,149 +176,178 @@ class _TrackingShipmentState extends State<TrackingShipment> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isDark
-                ? [colorScheme.primary, colorScheme.primaryContainer]
-                : [const Color(0xFF0EA5E9), const Color(0xFF0284C7)],
+              colors:
+                  isDark
+                      ? [colorScheme.primary, colorScheme.primaryContainer]
+                      : [const Color(0xFF0EA5E9), const Color(0xFF0284C7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
         ),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: colorScheme.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    style: TextStyle(color: colorScheme.error),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchShipments,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(color: colorScheme.primary),
+              )
+              : _errorMessage != null
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: colorScheme.error,
                     ),
-                    child: const Text('Retry'),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(color: colorScheme.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _fetchShipments,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+              : Column(
+                children: [
+                  // Search and Filter Section
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors:
+                            isDark
+                                ? [
+                                  colorScheme.primary,
+                                  colorScheme.primaryContainer,
+                                ]
+                                : [
+                                  const Color(0xFF0EA5E9),
+                                  const Color(0xFF0284C7),
+                                ],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                    child: Column(
+                      children: [
+                        // Search Bar
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) => setState(() {}),
+                            style: TextStyle(color: colorScheme.onSurface),
+                            decoration: InputDecoration(
+                              hintText: 'Search by tracking code...',
+                              hintStyle: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.5),
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: colorScheme.primary,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Status Filter Chips
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildFilterChip(context, 'All', 'all'),
+                              _buildFilterChip(context, 'Pending', 'pending'),
+                              _buildFilterChip(
+                                context,
+                                'In Transit',
+                                'intransit',
+                              ),
+                              _buildFilterChip(
+                                context,
+                                'Delivered',
+                                'delivered',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Shipments List
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _fetchShipments,
+                      color: colorScheme.primary,
+                      child:
+                          filteredShipments.isEmpty
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.inbox_outlined,
+                                      size: 80,
+                                      color: colorScheme.onSurface.withOpacity(
+                                        0.4,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No shipments found',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : ListView.builder(
+                                padding: const EdgeInsets.all(20),
+                                itemCount: filteredShipments.length,
+                                itemBuilder: (context, index) {
+                                  final shipment = filteredShipments[index];
+                                  return _buildShipmentCard(context, shipment);
+                                },
+                              ),
+                    ),
                   ),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                // Search and Filter Section
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                        ? [colorScheme.primary, colorScheme.primaryContainer]
-                        : [const Color(0xFF0EA5E9), const Color(0xFF0284C7)],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                  child: Column(
-                    children: [
-                      // Search Bar
-                      Container(
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) => setState(() {}),
-                          style: TextStyle(color: colorScheme.onSurface),
-                          decoration: InputDecoration(
-                            hintText: 'Search by tracking code...',
-                            hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.5)),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: colorScheme.primary,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // Status Filter Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildFilterChip(context, 'All', 'all'),
-                            _buildFilterChip(context, 'Pending', 'pending'),
-                            _buildFilterChip(context, 'In Transit', 'intransit'),
-                            _buildFilterChip(context, 'Delivered', 'delivered'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Shipments List
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchShipments,
-                    color: colorScheme.primary,
-                    child: filteredShipments.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.inbox_outlined,
-                                  size: 80,
-                                  color: colorScheme.onSurface.withOpacity(0.4),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No shipments found',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: colorScheme.onSurface.withOpacity(0.6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(20),
-                            itemCount: filteredShipments.length,
-                            itemBuilder: (context, index) {
-                              final shipment = filteredShipments[index];
-                              return _buildShipmentCard(context, shipment);
-                            },
-                          ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 
@@ -325,7 +359,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white70,
+            color: isSelected ? Colors.black : Colors.black38,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -336,8 +370,8 @@ class _TrackingShipmentState extends State<TrackingShipment> {
           });
         },
         backgroundColor: Colors.white.withOpacity(0.2),
-        selectedColor: Colors.white.withOpacity(0.3),
-        checkmarkColor: Colors.white,
+        selectedColor: Colors.black.withOpacity(0.3),
+        checkmarkColor: Colors.blue,
         side: BorderSide(
           color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
           width: 2,
@@ -346,7 +380,10 @@ class _TrackingShipmentState extends State<TrackingShipment> {
     );
   }
 
-  Widget _buildShipmentCard(BuildContext context, Map<String, dynamic> shipment) {
+  Widget _buildShipmentCard(
+    BuildContext context,
+    Map<String, dynamic> shipment,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -358,9 +395,10 @@ class _TrackingShipmentState extends State<TrackingShipment> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: isDark
-              ? Colors.black.withOpacity(0.2)
-              : Colors.black.withOpacity(0.05),
+            color:
+                isDark
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -469,12 +507,19 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                 // Route Info
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 16, color: colorScheme.onSurface.withOpacity(0.6)),
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${shipment['origin'] ?? 'N/A'} → ${shipment['destination'] ?? 'N/A'}',
-                        style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13),
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 13,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -494,7 +539,10 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                     const SizedBox(width: 6),
                     Text(
                       'Registered: ${formatDate(shipment['registered_date'])}',
-                      style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13),
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -695,7 +743,8 @@ class ShipmentDetailsSheet extends StatelessWidget {
                           onPressed: () => Navigator.pop(context),
                           icon: Icon(Icons.close, color: colorScheme.onSurface),
                           style: IconButton.styleFrom(
-                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            backgroundColor:
+                                colorScheme.surfaceContainerHighest,
                           ),
                         ),
                       ],
@@ -762,7 +811,11 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       iconColor: Colors.orange,
                       title: 'Shipment Information',
                       children: [
-                        _buildDetailRow(context, 'Origin', shipment['origin'] ?? 'N/A'),
+                        _buildDetailRow(
+                          context,
+                          'Origin',
+                          shipment['origin'] ?? 'N/A',
+                        ),
                         _buildDetailRow(
                           context,
                           'Destination',
@@ -811,7 +864,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                     if (shipment['status_updates'] != null &&
                         (shipment['status_updates'] as List).isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      _buildStatusUpdates(context, shipment['status_updates'] as List),
+                      _buildStatusUpdates(
+                        context,
+                        shipment['status_updates'] as List,
+                      ),
                     ],
 
                     // Admin Notes (if available)
@@ -945,7 +1001,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 14,
+              ),
             ),
           ),
           Expanded(
@@ -963,7 +1022,11 @@ class ShipmentDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteTimeline(BuildContext context, String currentStage, String? currentStageDisplay) {
+  Widget _buildRouteTimeline(
+    BuildContext context,
+    String currentStage,
+    String? currentStageDisplay,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -1002,11 +1065,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
                   color: colorScheme.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.route,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
+                child: Icon(Icons.route, color: colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 12),
               Text(
@@ -1034,23 +1093,25 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isActive
-                            ? colorScheme.primary
-                            : colorScheme.outlineVariant,
+                        color:
+                            isActive
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isCurrent ? Colors.white : Colors.transparent,
                           width: 3,
                         ),
-                        boxShadow: isCurrent
-                            ? [
-                                BoxShadow(
-                                  color: colorScheme.primary.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                              ]
-                            : null,
+                        boxShadow:
+                            isCurrent
+                                ? [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                                : null,
                       ),
                       child: Icon(
                         stage['icon'] as IconData,
@@ -1062,9 +1123,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       Container(
                         width: 2,
                         height: 40,
-                        color: isActive
-                            ? colorScheme.primary
-                            : colorScheme.outlineVariant,
+                        color:
+                            isActive
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant,
                       ),
                   ],
                 ),
@@ -1080,9 +1142,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isActive
-                                ? colorScheme.onSurface
-                                : colorScheme.onSurface.withOpacity(0.4),
+                            color:
+                                isActive
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurface.withOpacity(0.4),
                           ),
                         ),
                         if (isCurrent && currentStageDisplay != null)

@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import 'package:shippng_management_app/auths/auth_controller.dart';
-import 'package:shippng_management_app/screeens/settings.dart';
+import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/editProfile.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/settings.dart';
 
 class UserAccountPage extends StatelessWidget {
   const UserAccountPage({Key? key}) : super(key: key);
 
+  // Blue sky color scheme
+  static const Color skyBlue = Color(0xFF4A90E2);
+  static const Color lightSkyBlue = Color(0xFF87CEEB);
+  static const Color deepSkyBlue = Color(0xFF2E73B8);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -24,30 +31,16 @@ class UserAccountPage extends StatelessWidget {
                   _buildAnimatedProfileOption(
                     context,
                     0,
-                    Icons.person_outline,
+                    Icons.person_outline_rounded,
                     'Edit Profile',
-                    () {},
-                  ),
-                  _buildAnimatedProfileOption(
-                    context,
-                    1,
-                    Icons.history,
-                    'Shipping History',
-                    () {},
-                  ),
-                  _buildAnimatedProfileOption(
-                    context,
-                    2,
-                    Icons.credit_card,
-                    'Payment Methods',
-                    () {},
-                  ),
-                  _buildAnimatedProfileOption(
-                    context,
-                    3,
-                    Icons.location_on_outlined,
-                    'Saved Addresses',
-                    () {},
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfilePage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildAnimatedProfileOption(
                     context,
@@ -66,25 +59,63 @@ class UserAccountPage extends StatelessWidget {
                   _buildAnimatedProfileOption(
                     context,
                     5,
-                    Icons.help_outline,
-                    'Help & Support',
-                    () {},
+                    Icons.lock_outline_rounded,
+                    'Change Password',
+                    () => _showChangePasswordSheet(context),
                   ),
                   const SizedBox(height: 20),
                   _buildAnimatedProfileOption(
                     context,
                     6,
-                    Icons.logout,
+                    Icons.logout_rounded,
                     'Logout',
                     () async {
-                      await Provider.of<AuthController>(
-                        context,
-                        listen: false,
-                      ).logout();
+                      // Show confirmation dialog
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: const Text('Logout'),
+                              content: const Text(
+                                'Are you sure you want to logout?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(color: Colors.grey[600]),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    'Logout',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
+
+                      if (confirm == true) {
+                        await Provider.of<AuthController>(
+                          context,
+                          listen: false,
+                        ).logout();
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login',
+                          (Route<dynamic> route) => false,
+                        );
+                      }
                     },
                     isDestructive: true,
                   ),
-                  const SizedBox(height: 100), // Space for floating nav bar
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -94,25 +125,25 @@ class UserAccountPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 60, bottom: 30),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1565C0), Color(0xFF1A237E)],
+          colors: [lightSkyBlue, skyBlue, deepSkyBlue],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black26,
+            color: skyBlue.withOpacity(0.4),
             blurRadius: 20,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -130,7 +161,7 @@ class UserAccountPage extends StatelessWidget {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
+                          blurRadius: 15,
                           spreadRadius: 2,
                         ),
                       ],
@@ -138,20 +169,31 @@ class UserAccountPage extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.white,
-                      backgroundImage:
-                          auth.profilePicture != null &&
-                              auth.profilePicture!.isNotEmpty
-                          ? NetworkImage(auth.profilePicture!)
-                          : null,
-                      child:
-                          auth.profilePicture == null ||
-                              auth.profilePicture!.isEmpty
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Color(0xFF1565C0),
-                            )
-                          : null,
+                      child: ClipOval(
+                        child:
+                            auth.profilePicture != null &&
+                                    auth.profilePicture!.isNotEmpty
+                                ? Image.network(
+                                  auth.profilePicture!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      "assets/images/avatar.png",
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                )
+                                : Image.asset(
+                                  "assets/images/avatar.png",
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -165,12 +207,22 @@ class UserAccountPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    auth.userEmail ?? 'No Email',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.8),
-                      fontWeight: FontWeight.w400,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      auth.userEmail ?? 'No Email',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -212,16 +264,16 @@ class UserAccountPage extends StatelessWidget {
     bool isDestructive,
   ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A237E).withOpacity(0.08),
+            color: skyBlue.withOpacity(0.08),
             spreadRadius: 0,
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -229,41 +281,49 @@ class UserAccountPage extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDestructive
-                        ? Colors.red.withOpacity(0.1)
-                        : const Color(0xFF1565C0).withOpacity(0.1),
+                    gradient:
+                        isDestructive
+                            ? LinearGradient(
+                              colors: [
+                                Colors.red.withOpacity(0.1),
+                                Colors.red.withOpacity(0.05),
+                              ],
+                            )
+                            : const LinearGradient(
+                              colors: [lightSkyBlue, skyBlue],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isDestructive ? Colors.red : const Color(0xFF1565C0),
-                    size: 24,
+                    color: isDestructive ? Colors.red : Colors.white,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDestructive
-                          ? Colors.red
-                          : Theme.of(context).colorScheme.onSurface,
+                      color: isDestructive ? Colors.red : Colors.grey[800],
                     ),
                   ),
                 ),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 18,
+                  size: 16,
                   color: Colors.grey[400],
                 ),
               ],
@@ -280,53 +340,84 @@ class UserAccountPage extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1A237E).withOpacity(0.08),
+                color: skyBlue.withOpacity(0.08),
                 spreadRadius: 0,
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Personal Information',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [lightSkyBlue, skyBlue],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Personal Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: skyBlue,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _buildInfoRow(
                 context,
-                Icons.phone,
+                Icons.phone_outlined,
                 'Phone',
                 auth.phoneNumber ?? 'N/A',
               ),
-              const Divider(height: 24),
+              const Divider(height: 28, thickness: 1),
               _buildInfoRow(
                 context,
-                Icons.location_city,
-                'City',
-                auth.city ?? 'N/A',
-              ),
-              const Divider(height: 24),
-              _buildInfoRow(
-                context,
-                Icons.public,
+                Icons.public_rounded,
                 'Country',
                 auth.country ?? 'N/A',
+              ),
+              const Divider(height: 28, thickness: 1),
+              _buildInfoRow(
+                context,
+                Icons.location_city_rounded,
+                'City',
+                auth.city ?? 'N/A',
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _showChangePasswordSheet(BuildContext context) {
+    // show a dedicated stateful sheet widget for cleaner state management
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => ChangePasswordSheet(),
     );
   }
 
@@ -339,37 +430,212 @@ class UserAccountPage extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF1565C0).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: skyBlue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 20, color: const Color(0xFF1565C0)),
+          child: Icon(icon, size: 20, color: skyBlue),
         ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                fontWeight: FontWeight.w500,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[800],
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
+    );
+  }
+}
+
+class ChangePasswordSheet extends StatefulWidget {
+  const ChangePasswordSheet({Key? key}) : super(key: key);
+
+  @override
+  State<ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+}
+
+class _ChangePasswordSheetState extends State<ChangePasswordSheet> {
+  final _formKey = GlobalKey<FormState>();
+  String _oldPassword = '';
+  String _newPassword = '';
+  String _confirmPassword = '';
+  bool _loading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 20,
+        right: 20,
+        top: 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Change Password',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Old password',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  obscureText: true,
+                  onChanged: (v) => _oldPassword = v.trim(),
+                  validator:
+                      (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'New password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  obscureText: true,
+                  onChanged: (v) => _newPassword = v.trim(),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Required';
+                    if (v.length < 6) return 'Min 6 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm new password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  obscureText: true,
+                  onChanged: (v) => _confirmPassword = v.trim(),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Required';
+                    if (v != _newPassword) return 'Passwords do not match';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed:
+                        _loading
+                            ? null
+                            : () async {
+                              if (!_formKey.currentState!.validate()) return;
+                              setState(() => _loading = true);
+                              try {
+                                final auth = Provider.of<AuthController>(
+                                  context,
+                                  listen: false,
+                                );
+                                final ok = await auth.changePassword(
+                                  oldPassword: _oldPassword,
+                                  newPassword: _newPassword,
+                                  confirmPassword: _confirmPassword,
+                                );
+                                setState(() => _loading = false);
+                                if (ok) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Password changed — please login again',
+                                      ),
+                                    ),
+                                  );
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    '/login',
+                                    (r) => false,
+                                  );
+                                } else {
+                                  final errorMsg =
+                                      context
+                                          .read<AuthController>()
+                                          .errorMessage ??
+                                      'Failed to change password';
+
+                                  Fluttertoast.showToast(
+                                    msg: errorMsg,
+                                    toastLength: Toast.LENGTH_LONG,
+                                    gravity: ToastGravity.TOP,
+                                    backgroundColor: Colors.red.shade700,
+                                    textColor: Colors.white,
+                                  );
+
+                                  // ScaffoldMessenger.of(context).showSnackBar(
+                                  //   SnackBar(
+                                  //     content: Text(
+                                  //       Provider.of<AuthController>(
+                                  //             context,
+                                  //             listen: false,
+                                  //           ).errorMessage ??
+                                  //           'Failed to change password',
+                                  //     ),
+                                  //   ),
+                                  // );
+                                }
+                              } catch (e) {
+                                setState(() => _loading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: $e')),
+                                );
+                              }
+                            },
+                    child:
+                        _loading
+                            ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Text('Change password'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

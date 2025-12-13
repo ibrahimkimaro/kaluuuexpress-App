@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:kaluu_Epreess_Cargo/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:shippng_management_app/auths/auth_controller.dart';
-import 'package:shippng_management_app/auths/login.dart';
-import 'package:shippng_management_app/auths/register.dart';
-import 'package:shippng_management_app/screeens/screenNavigation.dart';
-import 'package:shippng_management_app/screeens/splash_screen.dart';
+import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
+import 'package:kaluu_Epreess_Cargo/auths/login.dart';
+import 'package:kaluu_Epreess_Cargo/auths/register.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/splash_screen.dart';
 
-import 'package:shippng_management_app/providers/theme_provider.dart';
+import 'package:kaluu_Epreess_Cargo/providers/theme_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(
+          create: (_) => AuthController(),
+        ), // ← Creates AuthController
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
@@ -29,7 +32,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'KALUU SHIPPING APP',
+          title: 'KALUU EXPRESS APP',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
@@ -108,7 +111,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         if (authController.isAuthenticated) {
           return const HomeScreeenNav();
         } else {
-          return const RegisterPage(); // User requested RegisterPage if not logged in
+          return const RegisterPage();
         }
       },
     );

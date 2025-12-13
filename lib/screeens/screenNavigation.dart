@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shippng_management_app/screeens/homePage.dart';
-import 'package:shippng_management_app/screeens/useraccount.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/homePage.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/useraccount.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 class HomeScreeenNav extends StatefulWidget {
@@ -10,13 +10,16 @@ class HomeScreeenNav extends StatefulWidget {
   State<HomeScreeenNav> createState() => _HomepageState();
 }
 
+class BlueSkyColors {
+  static const Color skyBlue = Color(0xFF4A90E2);
+  static const Color lightSkyBlue = Color(0xFF87CEEB);
+  static const Color deepSkyBlue = Color(0xFF2E73B8);
+}
+
 class _HomepageState extends State<HomeScreeenNav> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    HomePage(),
-    UserAccountPage(),
-  ];
+  static const List<Widget> _pages = <Widget>[HomePage(), UserAccountPage()];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -36,9 +39,10 @@ class _HomepageState extends State<HomeScreeenNav> {
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         decoration: BoxDecoration(
-          color: isDark
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.95)
-              : colorScheme.surface.withOpacity(0.95),
+          color:
+              isDark
+                  ? colorScheme.surfaceContainerHighest.withOpacity(0.95)
+                  : colorScheme.surface.withOpacity(0.95),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
@@ -56,7 +60,7 @@ class _HomepageState extends State<HomeScreeenNav> {
             iconSize: 24,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: colorScheme.primary,
+            tabBackgroundColor: BlueSkyColors.skyBlue,
             color: colorScheme.onSurfaceVariant,
             tabs: const [
               GButton(icon: Icons.home, text: 'Home'),

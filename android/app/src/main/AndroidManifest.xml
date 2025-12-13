@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     
     <application
-        android:label="shippng_management_app"
+        android:label="Kaluu Epress Cargo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

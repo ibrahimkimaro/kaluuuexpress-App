@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shippng_management_app/auths/api_service.dart';
+import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
 
 class MyInvoice extends StatefulWidget {
   const MyInvoice({super.key});
@@ -125,21 +125,23 @@ class _MyInvoiceState extends State<MyInvoice> {
     if (picked != null) {
       final dateKey = _getDateKey(picked);
       // Filter invoices for the selected date
-      final filteredInvoices = _allInvoices.where((invoice) {
-        final invoiceDate = DateTime.parse(invoice['created_at']);
-        return invoiceDate.year == picked.year &&
-            invoiceDate.month == picked.month &&
-            invoiceDate.day == picked.day;
-      }).toList();
+      final filteredInvoices =
+          _allInvoices.where((invoice) {
+            final invoiceDate = DateTime.parse(invoice['created_at']);
+            return invoiceDate.year == picked.year &&
+                invoiceDate.month == picked.month &&
+                invoiceDate.day == picked.day;
+          }).toList();
 
       if (filteredInvoices.isNotEmpty) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DailyInvoicesPage(
-              dateTitle: dateKey,
-              invoices: filteredInvoices,
-            ),
+            builder:
+                (context) => DailyInvoicesPage(
+                  dateTitle: dateKey,
+                  invoices: filteredInvoices,
+                ),
           ),
         );
       } else {
@@ -208,58 +210,59 @@ class _MyInvoiceState extends State<MyInvoice> {
           icon: const Icon(Icons.calendar_today_rounded, color: Colors.white),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _fetchInvoices,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+              : _groupedInvoices.isEmpty
+              ? Center(
+                child: Text(
+                  'No invoices found',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchInvoices,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : _groupedInvoices.isEmpty
-          ? Center(
-              child: Text(
-                'No invoices found',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              )
+              : RefreshIndicator(
+                onRefresh: _fetchInvoices,
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+                  itemCount: _groupedInvoices.length,
+                  itemBuilder: (context, index) {
+                    final dateKey = _groupedInvoices.keys.elementAt(index);
+                    final invoices = _groupedInvoices[dateKey]!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDateHeader(dateKey, invoices),
+                        ...invoices.map(
+                          (invoice) => InvoiceCard(
+                            invoice: invoice,
+                            onTap: () => _showInvoiceDetails(context, invoice),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  },
                 ),
               ),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchInvoices,
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
-                itemCount: _groupedInvoices.length,
-                itemBuilder: (context, index) {
-                  final dateKey = _groupedInvoices.keys.elementAt(index);
-                  final invoices = _groupedInvoices[dateKey]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDateHeader(dateKey, invoices),
-                      ...invoices.map(
-                        (invoice) => InvoiceCard(
-                          invoice: invoice,
-                          onTap: () => _showInvoiceDetails(context, invoice),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                },
-              ),
-            ),
     );
   }
 
@@ -276,8 +279,9 @@ class _MyInvoiceState extends State<MyInvoice> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  DailyInvoicesPage(dateTitle: dateKey, invoices: invoices),
+              builder:
+                  (context) =>
+                      DailyInvoicesPage(dateTitle: dateKey, invoices: invoices),
             ),
           );
         },
@@ -331,9 +335,8 @@ class InvoiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPaid = invoice['payment_status'] == 'paid';
-    final statusColor = isPaid
-        ? const Color(0xFF00C853)
-        : const Color(0xFFD32F2F);
+    final statusColor =
+        isPaid ? const Color(0xFF00C853) : const Color(0xFFD32F2F);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -587,8 +590,9 @@ class DailyInvoicesPage extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) =>
-                          InvoiceDetailSheet(invoice: invoices[index]),
+                      builder:
+                          (context) =>
+                              InvoiceDetailSheet(invoice: invoices[index]),
                     );
                   },
                 );
@@ -616,9 +620,8 @@ class InvoiceDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPaid = invoice['payment_status'] == 'paid';
-    final statusColor = isPaid
-        ? const Color(0xFF00C853)
-        : const Color(0xFFD32F2F);
+    final statusColor =
+        isPaid ? const Color(0xFF00C853) : const Color(0xFFD32F2F);
 
     return Container(
       decoration: BoxDecoration(
@@ -716,6 +719,16 @@ class InvoiceDetailSheet extends StatelessWidget {
               ),
             ],
           ),
+          _buildDetailRow(
+            context,
+            'Paid Bill',
+            'TSh ${_parseNum(invoice['paying_bill']).toStringAsFixed(2)}',
+          ),
+          _buildDetailRow(
+            context,
+            'Credit Amount',
+            'TSh ${_parseNum(invoice['credit_amount']).toStringAsFixed(2)}',
+          ),
           const SizedBox(height: 32),
           if (!isPaid)
             SizedBox(
@@ -723,7 +736,7 @@ class InvoiceDetailSheet extends StatelessWidget {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: Implement payment
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
@@ -733,7 +746,7 @@ class InvoiceDetailSheet extends StatelessWidget {
                   elevation: 2,
                 ),
                 child: const Text(
-                  'Pay Now',
+                  'Close',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
