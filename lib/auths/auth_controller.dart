@@ -34,6 +34,8 @@ class AuthController extends ChangeNotifier {
   String? get phoneNumber => _userData?['phone_number'];
   String? get city => _userData?['city'];
   String? get country => _userData?['country'];
+  bool get isCreator =>
+      _userData?['is_staff'] == true || _userData?['role'] == 'creator';
 
   /// Initialize authentication state
   Future<void> init() async {

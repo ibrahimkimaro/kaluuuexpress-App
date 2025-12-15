@@ -5,6 +5,7 @@ import 'package:kaluu_Epreess_Cargo/screeens/calculateCost.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/heloandSupport.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/message.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/notifocation.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/packingList.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/trackSHipment.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/useraccount.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/myInvoice.dart';
@@ -524,6 +525,27 @@ class _HomePageState extends State<HomePage>
                       context,
                       MaterialPageRoute(
                         builder: (context) => const FindBranch(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  'Packing List',
+                  Icons.store,
+                  const Color.fromARGB(255, 74, 104, 88),
+                  const Color.fromARGB(211, 22, 190, 131),
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PackingListPage(),
                       ),
                     );
                   },
