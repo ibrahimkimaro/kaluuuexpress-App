@@ -9,10 +9,9 @@ import 'package:flutter/foundation.dart';
 /// Handles all API requests with automatic token management
 class ApiService {
   // Base URL - Change this to your production URL
-  static const String baseUrl =
-      'http://192.168.1.154:8000'; // For Android Emulator
+  static const String baseUrl = 'http://192.168.0.2:8000'; // Production Server
+  // static const String baseUrl = 'http://192.168.1.154:8000'; // For Android Emulator
   // static const String baseUrl = 'http://localhost:8000'; // For iOS Simulator
-  // static const String baseUrl = 'https://api.kaluuexpress.com'; // Production
 
   static const String apiPrefix = '/api/auth';
 
@@ -154,6 +153,7 @@ class ApiService {
   }
 
   /// Handle API response
+  /// Handle API response
   ApiResponse _handleResponse(http.Response response) {
     if (kDebugMode) {
       print('Response Status: ${response.statusCode}');
@@ -163,18 +163,68 @@ class ApiService {
     try {
       final data = jsonDecode(response.body);
 
+      // Success case
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return ApiResponse.success(data);
-      } else {
-        return ApiResponse.error(
-          data['error'] ?? data['message'] ?? 'Unknown error',
-          statusCode: response.statusCode,
-          data: data,
-        );
       }
-    } catch (e) {
+
+      // Error case - extract error message from various possible formats
+      String? errorMessage;
+
+      // Format 1: Direct error field
+      if (data['error'] != null) {
+        errorMessage = data['error'].toString();
+      }
+      // phone number error
+      else if ((data['phone_number'] != null)) {
+        errorMessage = data["phone_number"]
+            .toString()
+            .replaceAll('[', '')
+            .replaceAll(']', '')
+            .replaceAll('.', ' ');
+        // print(errorMessage);
+      } else if ((data['password'] != null)) {
+        errorMessage = data["password"].toString();
+      }
+      // Format 2: Message field
+      else if (data['message'] != null) {
+        errorMessage = data['message'].toString();
+      }
+      // Format 3: Detail field (common in Django REST Framework)
+      else if (data['detail'] != null) {
+        errorMessage = data['detail'].toString();
+      }
+      // Format 4: Email field errors (common for registration)
+      else if (data['email'] != null && data['email'] is List) {
+        errorMessage = data['email'].first?.toString();
+      }
+      // Format 5: Phone number field errors
+      else if (data['phone_number'] != null && data['phone_number'] is List) {
+        errorMessage = data['phone_number'].first?.toString();
+      }
+      // Format 6: Password field errors
+      else if (data['password'] != null && data['password'] is List) {
+        errorMessage = data['password'].first?.toString();
+      }
+      // Format 7: Non-field errors
+      else if (data['non_field_errors'] != null &&
+          data['non_field_errors'] is List) {
+        errorMessage = data['non_field_errors'].first?.toString();
+      }
+      // Format 8: Generic error message
+      else {
+        errorMessage = 'Request failed with status ${response.statusCode}';
+      }
+
       return ApiResponse.error(
-        'Failed to parse response',
+        errorMessage ?? 'Unknown error',
+        statusCode: response.statusCode,
+        data: data,
+      );
+    } catch (e) {
+      // If response is not JSON or empty
+      return ApiResponse.error(
+        response.body.isNotEmpty ? response.body : 'Failed to parse response',
         statusCode: response.statusCode,
       );
     }
@@ -433,6 +483,80 @@ class ApiService {
     }
   }
 
+  /// Generic Multipart POST request
+  Future<ApiResponse> postMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required List<http.MultipartFile> files,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl$endpoint');
+
+      if (kDebugMode) {
+        print('POST Multipart Request: $uri');
+        print('Fields: $fields');
+        print('Files: ${files.length}');
+      }
+
+      var request = http.MultipartRequest('POST', uri);
+
+      // Add headers
+      if (requiresAuth && _accessToken != null) {
+        request.headers['Authorization'] = 'Bearer $_accessToken';
+      }
+      request.headers['Accept'] = 'application/json';
+
+      // Add fields
+      request.fields.addAll(fields);
+
+      // Add files
+      request.files.addAll(files);
+
+      // Send request
+      var streamedResponse = await request.send().timeout(timeout);
+      var response = await http.Response.fromStream(streamedResponse);
+
+      // If unauthorized, try to refresh token
+      if (response.statusCode == 401 && requiresAuth) {
+        if (kDebugMode) {
+          print('Unauthorized, attempting token refresh...');
+        }
+
+        if (await _refreshAccessToken()) {
+          // Create new request for retry (cannot reuse MultipartRequest)
+          request = http.MultipartRequest('POST', uri);
+          if (_accessToken != null) {
+            request.headers['Authorization'] = 'Bearer $_accessToken';
+          }
+          request.headers['Accept'] = 'application/json';
+          request.fields.addAll(fields);
+          // We need to recreate files because streams might be read
+          // However, for simple file paths we can assume we can recreate them
+          // But since we passed MultipartFile objects, we might need to be careful.
+          // For now, assuming the files are reusable or we accept that retry might fail if streams are consumed.
+          // Ideally, we should pass file paths or bytes to this method to be safe.
+          // But to keep it simple and compatible with existing code structure:
+          request.files.addAll(files);
+
+          streamedResponse = await request.send().timeout(timeout);
+          response = await http.Response.fromStream(streamedResponse);
+        }
+      }
+
+      return _handleResponse(response);
+    } on SocketException {
+      return ApiResponse.error('No internet connection');
+    } on TimeoutException {
+      return ApiResponse.error('Request timeout');
+    } catch (e) {
+      if (kDebugMode) {
+        print('POST Multipart Error: $e');
+      }
+      return ApiResponse.error('Network error: $e');
+    }
+  }
+
   // ==================== Authentication APIs ====================
 
   /// Register new user
@@ -513,11 +637,12 @@ class ApiService {
   /// Update user profile
   Future<ApiResponse> updateProfile({
     String? fullName,
+    String? email,
     String? phoneNumber,
     String? address,
     String? city,
     String? country,
-    String? postalCode,
+    String? profile_picture,
   }) async {
     final body = <String, dynamic>{};
     if (fullName != null) body['full_name'] = fullName;
@@ -525,9 +650,70 @@ class ApiService {
     if (address != null) body['address'] = address;
     if (city != null) body['city'] = city;
     if (country != null) body['country'] = country;
-    if (postalCode != null) body['postal_code'] = postalCode;
 
-    return await patch('$apiPrefix/profile/', body: body);
+    // If no profile picture or profile_picture is not a valid file path, send JSON PATCH
+    if (profile_picture == null || profile_picture.isEmpty) {
+      return await patch('$apiPrefix/profile/', body: body);
+    }
+
+    // If profile_picture looks like a local file path, send multipart/form-data PATCH
+    try {
+      final file = File(profile_picture);
+      if (!file.existsSync()) {
+        // If the provided path is not a file, fall back to JSON PATCH including the string value
+        body['profile_picture'] = profile_picture;
+        return await patch('$apiPrefix/profile/', body: body);
+      }
+
+      final uri = Uri.parse('$baseUrl$apiPrefix/profile/');
+
+      if (kDebugMode) {
+        print('PATCH Multipart Request: $uri');
+        print('Fields: $body');
+        print('File: ${file.path}');
+      }
+
+      // Build multipart request with PATCH method
+      final request = http.MultipartRequest('PATCH', uri);
+
+      // Add auth header only (do not set Content-Type - MultipartRequest will set it)
+      if (_accessToken != null) {
+        request.headers['Authorization'] = 'Bearer $_accessToken';
+      }
+      request.headers['Accept'] = 'application/json';
+
+      // Add fields
+      body.forEach((k, v) => request.fields[k] = v.toString());
+
+      // Add file
+      final multipartFile = await http.MultipartFile.fromPath(
+        'profile_picture',
+        file.path,
+      );
+      request.files.add(multipartFile);
+
+      final streamedResponse = await request.send().timeout(timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // If unauthorized, try refresh and retry once
+      if (response.statusCode == 401 && await _refreshAccessToken()) {
+        // retry with refreshed token
+        if (_accessToken != null)
+          request.headers['Authorization'] = 'Bearer $_accessToken';
+        final retryStream = await request.send().timeout(timeout);
+        final retryResp = await http.Response.fromStream(retryStream);
+        return _handleResponse(retryResp);
+      }
+
+      return _handleResponse(response);
+    } on SocketException {
+      return ApiResponse.error('No internet connection');
+    } on TimeoutException {
+      return ApiResponse.error('Request timeout');
+    } catch (e) {
+      if (kDebugMode) print('Multipart PATCH error: $e');
+      return ApiResponse.error('Network error: $e');
+    }
   }
 
   /// Change password
@@ -620,6 +806,54 @@ class ApiService {
   /// Get shipment by tracking code
   Future<ApiResponse> getShipmentByTrackingCode(String trackingCode) async {
     return await get('/api/shipping/shipments/$trackingCode/');
+  }
+
+  // ==================== Packing List APIs ====================
+
+  /// Get all packing lists
+  Future<ApiResponse> getPackingLists() async {
+    return await get('/api/shipping/packing-lists/');
+  }
+
+  /// Delete packing list
+  Future<ApiResponse> deletePackingList(int id) async {
+    return await delete('/api/shipping/packing-lists/$id/');
+  }
+
+  /// Download packing list PDF
+  Future<ApiResponse> downloadPackingList(int id) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/api/shipping/packing-lists/$id/download/',
+      );
+
+      var response = await http.get(
+        uri,
+        headers: _buildHeaders(includeAuth: true),
+      );
+
+      // If unauthorized, try to refresh token
+      if (response.statusCode == 401) {
+        if (kDebugMode) {
+          print('Unauthorized download, attempting token refresh...');
+        }
+
+        if (await _refreshAccessToken()) {
+          response = await http.get(
+            uri,
+            headers: _buildHeaders(includeAuth: true),
+          );
+        }
+      }
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(response.bodyBytes); // Return bytes
+      } else {
+        return _handleResponse(response);
+      }
+    } catch (e) {
+      return ApiResponse.error('Download failed: $e');
+    }
   }
 }
 

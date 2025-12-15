@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:shippng_management_app/screeens/branch.dart';
-import 'package:shippng_management_app/screeens/calculateCost.dart';
-import 'package:shippng_management_app/screeens/message.dart';
-import 'package:shippng_management_app/screeens/trackSHipment.dart';
-import 'package:shippng_management_app/screeens/useraccount.dart';
-import 'package:shippng_management_app/screeens/myInvoice.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/aboutUs.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/branch.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/calculateCost.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/heloandSupport.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/message.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/notifocation.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/packingList.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/trackSHipment.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/useraccount.dart';
+import 'package:kaluu_Epreess_Cargo/screeens/myInvoice.dart';
 import 'package:provider/provider.dart';
-import 'package:shippng_management_app/auths/auth_controller.dart';
+import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'dart:math' as math;
 
 class HomePage extends StatefulWidget {
@@ -143,22 +148,48 @@ class _HomePageState extends State<HomePage>
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   children: [
                     _buildDrawerItem(Icons.dashboard, 'Dashboard', true),
+                    // _buildDrawerItem(
+                    //   Icons.track_changes,
+                    //   'Track Shipment',
+                    //   false,
+                    // ),
+                    // _buildDrawerItem(Icons.add_box, 'New Shipment', false),
+                    // _buildDrawerItem(Icons.history, 'History', false),
+                    // _buildDrawerItem(Icons.local_offer, 'Pricing', false),
                     _buildDrawerItem(
-                      Icons.track_changes,
-                      'Track Shipment',
+                      Icons.contact_support,
+                      'Help & Support',
                       false,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HelpAndSupportPage(),
+                          ),
+                        );
+                      },
                     ),
-                    _buildDrawerItem(Icons.add_box, 'New Shipment', false),
-                    _buildDrawerItem(Icons.history, 'History', false),
-                    _buildDrawerItem(Icons.local_offer, 'Pricing', false),
-                    _buildDrawerItem(Icons.contact_support, 'Support', false),
                     const Divider(color: Colors.white30, height: 40),
+                    // _buildDrawerItem(
+                    //   Icons.notifications,
+                    //   'Notifications',
+                    //   false,
+                    // ),
                     _buildDrawerItem(
-                      Icons.notifications,
-                      'Notifications',
+                      Icons.info_outline,
+                      'About Us',
                       false,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AboutUsPage(),
+                          ),
+                        );
+                      },
                     ),
-                    _buildDrawerItem(Icons.info_outline, 'About Us', false),
                   ],
                 ),
               ),
@@ -169,7 +200,12 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, bool isSelected) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    bool isSelected, {
+    VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -185,12 +221,15 @@ class _HomePageState extends State<HomePage>
             fontWeight: FontWeight.w500,
           ),
         ),
-        onTap: () {
-          Navigator.pop(context);
-        },
+        onTap: onTap,
       ),
     );
   }
+
+  // Blue sky
+  static const Color skyBlue = Color(0xFF4A90E2);
+  static const Color lightSkyBlue = Color(0xFF87CEEB);
+  static const Color deepSkyBlue = Color(0xFF2E73B8);
 
   Widget _buildHeader() {
     return FadeTransition(
@@ -198,23 +237,23 @@ class _HomePageState extends State<HomePage>
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
         decoration: const BoxDecoration(
-          // gradient: LinearGradient(
-          //   begin: Alignment.topLeft,
-          //   end: Alignment.bottomRight,
-          //   colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
-          // ),
-          image: DecorationImage(
-            image: AssetImage('assets/images/backgroundKaluuImage.jpeg'),
-            fit: BoxFit.cover,
-            opacity: 0.5,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              lightSkyBlue, // top-left
+              skyBlue, // middle
+              deepSkyBlue, // bottom-right
+            ],
           ),
+
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(30),
             bottomRight: Radius.circular(30),
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -232,33 +271,48 @@ class _HomePageState extends State<HomePage>
                 ),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Stack(
-                        children: [
-                          const Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFB71C1C),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    //   Container(
+                    //     padding: const EdgeInsets.all(5),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.white.withOpacity(0.2),
+                    //       borderRadius: BorderRadius.circular(12),
+                    //     ),
+                    //     child: Stack(
+                    //       children: [
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           // SharedPreferences.getInstance().then((prefs) {
+                    //           //   prefs.getString("")
+                    //           // });
+                    //           Navigator.pop(context);
+                    //           Navigator.push(
+                    //             context,
+                    //             MaterialPageRoute(
+                    //               builder:
+                    //                   (context) => const NotificationPage(),
+                    //             ),
+                    //           );
+                    //         },
+                    //         child: const Icon(
+                    //           Icons.notifications_outlined,
+                    //           color: Colors.white,
+                    //         ),
+                    //       ),
+                    //       Positioned(
+                    //         right: 0,
+                    //         top: 0,
+                    //         child: Container(
+                    //           width: 8,
+                    //           height: 8,
+                    //           decoration: const BoxDecoration(
+                    //             color: Color(0xFFB71C1C),
+                    //             shape: BoxShape.circle,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     Consumer<AuthController>(
                       builder: (context, auth, child) {
@@ -277,20 +331,35 @@ class _HomePageState extends State<HomePage>
                           child: CircleAvatar(
                             radius: 30,
                             backgroundColor: Colors.white,
-                            backgroundImage:
-                                auth.profilePicture != null &&
-                                    auth.profilePicture!.isNotEmpty
-                                ? NetworkImage(auth.profilePicture!)
-                                : null,
-                            child:
-                                auth.profilePicture == null ||
-                                    auth.profilePicture!.isEmpty
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 24,
-                                    color: Color(0xFF1565C0),
-                                  )
-                                : null,
+                            child: ClipOval(
+                              child:
+                                  auth.profilePicture != null &&
+                                          auth.profilePicture!.isNotEmpty
+                                      ? Image.network(
+                                        auth.profilePicture!,
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Image.asset(
+                                            "assets/images/avatar.png",
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          );
+                                        },
+                                      )
+                                      : Image.asset(
+                                        "assets/images/avatar.png",
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                            ),
                           ),
                         );
                       },
@@ -303,9 +372,9 @@ class _HomePageState extends State<HomePage>
             Consumer<AuthController>(
               builder: (context, auth, child) {
                 return Text(
-                  'Hello, ${auth.userName?.split(' ').first ?? 'User'}! 👋',
+                  'Hello, ${auth.userName?.split(' ').first} ${auth.userName?.split(' ').last ?? 'User'}! 👋',
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                     fontFamily: "Poppins",
@@ -456,6 +525,27 @@ class _HomePageState extends State<HomePage>
                       context,
                       MaterialPageRoute(
                         builder: (context) => const FindBranch(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  'Packing List',
+                  Icons.store,
+                  const Color.fromARGB(255, 74, 104, 88),
+                  const Color.fromARGB(211, 22, 190, 131),
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PackingListPage(),
                       ),
                     );
                   },

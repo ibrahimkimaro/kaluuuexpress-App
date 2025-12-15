@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shippng_management_app/auths/api_service.dart';
+import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
 import 'package:intl/intl.dart';
 
 class TrackingShipment extends StatefulWidget {
@@ -142,166 +142,216 @@ class _TrackingShipmentState extends State<TrackingShipment> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredShipments = _shipments.where((shipment) {
-      if (_selectedFilter != 'all' && shipment['status'] != _selectedFilter) {
-        return false;
-      }
-      if (_searchController.text.isNotEmpty) {
-        return shipment['tracking_code'].toString().toLowerCase().contains(
-          _searchController.text.toLowerCase(),
-        );
-      }
-      return true;
-    }).toList();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final filteredShipments =
+        _shipments.where((shipment) {
+          if (_selectedFilter != 'all' &&
+              shipment['status'] != _selectedFilter) {
+            return false;
+          }
+          if (_searchController.text.isNotEmpty) {
+            return shipment['tracking_code'].toString().toLowerCase().contains(
+              _searchController.text.toLowerCase(),
+            );
+          }
+          return true;
+        }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Track Shipments',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onPrimary,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
+        iconTheme: IconThemeData(color: colorScheme.onPrimary),
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+              colors:
+                  isDark
+                      ? [colorScheme.primary, colorScheme.primaryContainer]
+                      : [const Color(0xFF0EA5E9), const Color(0xFF0284C7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(color: colorScheme.primary),
+              )
+              : _errorMessage != null
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(color: colorScheme.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _fetchShipments,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+              : Column(
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                  // Search and Filter Section
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors:
+                            isDark
+                                ? [
+                                  colorScheme.primary,
+                                  colorScheme.primaryContainer,
+                                ]
+                                : [
+                                  const Color(0xFF0EA5E9),
+                                  const Color(0xFF0284C7),
+                                ],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                    child: Column(
+                      children: [
+                        // Search Bar
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) => setState(() {}),
+                            style: TextStyle(color: colorScheme.onSurface),
+                            decoration: InputDecoration(
+                              hintText: 'Search by tracking code...',
+                              hintStyle: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.5),
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: colorScheme.primary,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Status Filter Chips
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildFilterChip(context, 'All', 'all'),
+                              _buildFilterChip(context, 'Pending', 'pending'),
+                              _buildFilterChip(
+                                context,
+                                'In Transit',
+                                'intransit',
+                              ),
+                              _buildFilterChip(
+                                context,
+                                'Delivered',
+                                'delivered',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchShipments,
-                    child: const Text('Retry'),
+
+                  // Shipments List
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _fetchShipments,
+                      color: colorScheme.primary,
+                      child:
+                          filteredShipments.isEmpty
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.inbox_outlined,
+                                      size: 80,
+                                      color: colorScheme.onSurface.withOpacity(
+                                        0.4,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No shipments found',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : ListView.builder(
+                                padding: const EdgeInsets.all(20),
+                                itemCount: filteredShipments.length,
+                                itemBuilder: (context, index) {
+                                  final shipment = filteredShipments[index];
+                                  return _buildShipmentCard(context, shipment);
+                                },
+                              ),
+                    ),
                   ),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                // Search and Filter Section
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-                  child: Column(
-                    children: [
-                      // Search Bar
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) => setState(() {}),
-                          decoration: InputDecoration(
-                            hintText: 'Search by tracking code...',
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: Color(0xFF0EA5E9),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // Status Filter Chips
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildFilterChip('All', 'all'),
-                            _buildFilterChip('Pending', 'pending'),
-                            _buildFilterChip('In Transit', 'intransit'),
-                            _buildFilterChip('Delivered', 'delivered'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Shipments List
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchShipments,
-                    child: filteredShipments.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.inbox_outlined,
-                                  size: 80,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No shipments found',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(20),
-                            itemCount: filteredShipments.length,
-                            itemBuilder: (context, index) {
-                              final shipment = filteredShipments[index];
-                              return _buildShipmentCard(shipment);
-                            },
-                          ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 
-  Widget _buildFilterChip(String label, String value) {
+  Widget _buildFilterChip(BuildContext context, String label, String value) {
     final isSelected = _selectedFilter == value;
     return Padding(
       padding: const EdgeInsets.only(right: 10),
@@ -309,7 +359,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.black26,
+            color: isSelected ? Colors.black : Colors.black38,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -320,8 +370,8 @@ class _TrackingShipmentState extends State<TrackingShipment> {
           });
         },
         backgroundColor: Colors.white.withOpacity(0.2),
-        selectedColor: Colors.white.withOpacity(0.3),
-        checkmarkColor: Colors.white,
+        selectedColor: Colors.black.withOpacity(0.3),
+        checkmarkColor: Colors.blue,
         side: BorderSide(
           color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
           width: 2,
@@ -330,15 +380,25 @@ class _TrackingShipmentState extends State<TrackingShipment> {
     );
   }
 
-  Widget _buildShipmentCard(Map<String, dynamic> shipment) {
+  Widget _buildShipmentCard(
+    BuildContext context,
+    Map<String, dynamic> shipment,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color:
+                isDark
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -365,22 +425,22 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0EA5E9).withOpacity(0.1),
+                        color: colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.qr_code,
                             size: 16,
-                            color: Color(0xFF0EA5E9),
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             shipment['tracking_code'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0EA5E9),
+                              color: colorScheme.primary,
                               fontSize: 13,
                             ),
                           ),
@@ -435,10 +495,10 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                   shipment['customer_full_name'] ??
                       shipment['customer_name'] ??
                       'N/A',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                    color: colorScheme.onSurface,
                   ),
                 ),
 
@@ -447,12 +507,19 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                 // Route Info
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${shipment['origin'] ?? 'N/A'} → ${shipment['destination'] ?? 'N/A'}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 13,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -464,15 +531,18 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                 // Date
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 16,
-                      color: Colors.grey,
+                      color: colorScheme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Registered: ${formatDate(shipment['registered_date'])}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -490,7 +560,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                           'Route Progress',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: colorScheme.onSurface.withOpacity(0.6),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -498,7 +568,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                           '${(getRouteProgress(shipment) * 100).toInt()}%',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[800],
+                            color: colorScheme.onSurface,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -509,7 +579,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
                         value: getRouteProgress(shipment),
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: colorScheme.outlineVariant,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           getStatusColor(shipment['status']),
                         ),
@@ -530,7 +600,7 @@ class _TrackingShipmentState extends State<TrackingShipment> {
                       icon: const Icon(Icons.arrow_forward, size: 16),
                       label: const Text('View Details'),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0EA5E9),
+                        foregroundColor: colorScheme.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
                     ),
@@ -623,15 +693,18 @@ class ShipmentDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
@@ -644,7 +717,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
                 width: 50,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -658,18 +731,20 @@ class ShipmentDetailsSheet extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Shipment Details',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                          icon: Icon(Icons.close, color: colorScheme.onSurface),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.grey[100],
+                            backgroundColor:
+                                colorScheme.surfaceContainerHighest,
                           ),
                         ),
                       ],
@@ -679,8 +754,9 @@ class ShipmentDetailsSheet extends StatelessWidget {
 
                     // Tracking Code Card
                     _buildInfoCard(
+                      context,
                       icon: Icons.qr_code_2,
-                      iconColor: const Color(0xFF0EA5E9),
+                      iconColor: colorScheme.primary,
                       title: 'Tracking Code',
                       value: shipment['tracking_code'],
                       onTap: () {
@@ -688,9 +764,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                           ClipboardData(text: shipment['tracking_code']),
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Tracking code copied!'),
-                            duration: Duration(seconds: 2),
+                          SnackBar(
+                            content: const Text('Tracking code copied!'),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: colorScheme.primary,
                           ),
                         );
                       },
@@ -700,21 +777,25 @@ class ShipmentDetailsSheet extends StatelessWidget {
 
                     // Customer Info Card
                     _buildInfoCard(
+                      context,
                       icon: Icons.person,
                       iconColor: Colors.blue,
                       title: 'Customer Information',
                       children: [
                         _buildDetailRow(
+                          context,
                           'Name',
                           shipment['customer_full_name'] ??
                               shipment['customer_name'] ??
                               'N/A',
                         ),
                         _buildDetailRow(
+                          context,
                           'Email',
                           shipment['customer_email'] ?? 'N/A',
                         ),
                         _buildDetailRow(
+                          context,
                           'Phone',
                           shipment['customer_phone'] ?? 'N/A',
                         ),
@@ -725,34 +806,45 @@ class ShipmentDetailsSheet extends StatelessWidget {
 
                     // Shipment Info Card
                     _buildInfoCard(
+                      context,
                       icon: Icons.inventory_2,
                       iconColor: Colors.orange,
                       title: 'Shipment Information',
                       children: [
-                        _buildDetailRow('Origin', shipment['origin'] ?? 'N/A'),
                         _buildDetailRow(
+                          context,
+                          'Origin',
+                          shipment['origin'] ?? 'N/A',
+                        ),
+                        _buildDetailRow(
+                          context,
                           'Destination',
                           shipment['destination'] ?? 'N/A',
                         ),
                         _buildDetailRow(
+                          context,
                           'Weight',
                           '${shipment['weight'] ?? 'N/A'}${shipment['weight'] != null ? ' kg' : ''}',
                         ),
                         _buildDetailRow(
+                          context,
                           'Registered',
                           formatDate(shipment['registered_date']),
                         ),
                         _buildDetailRow(
+                          context,
                           'Est. Delivery',
                           formatDate(shipment['estimated_delivery']),
                         ),
                         if (shipment['actual_delivery_date'] != null)
                           _buildDetailRow(
+                            context,
                             'Actual Delivery',
                             formatDate(shipment['actual_delivery_date']),
                           ),
                         if (shipment['description'] != null)
                           _buildDetailRow(
+                            context,
                             'Description',
                             shipment['description'],
                           ),
@@ -763,6 +855,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
 
                     // Route Timeline
                     _buildRouteTimeline(
+                      context,
                       shipment['current_route_stage'] ?? '',
                       shipment['current_route_stage_display'],
                     ),
@@ -771,14 +864,17 @@ class ShipmentDetailsSheet extends StatelessWidget {
                     if (shipment['status_updates'] != null &&
                         (shipment['status_updates'] as List).isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      _buildStatusUpdates(shipment['status_updates'] as List),
+                      _buildStatusUpdates(
+                        context,
+                        shipment['status_updates'] as List,
+                      ),
                     ],
 
                     // Admin Notes (if available)
                     if (shipment['admin_notes'] != null &&
                         shipment['admin_notes'].toString().isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      _buildAdminNotes(shipment['admin_notes']),
+                      _buildAdminNotes(context, shipment['admin_notes']),
                     ],
 
                     const SizedBox(height: 24),
@@ -787,8 +883,8 @@ class ShipmentDetailsSheet extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0EA5E9),
-                        foregroundColor: Colors.white,
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -813,7 +909,8 @@ class ShipmentDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard({
+  Widget _buildInfoCard(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -821,11 +918,14 @@ class ShipmentDetailsSheet extends StatelessWidget {
     List<Widget>? children,
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Material(
         color: Colors.transparent,
@@ -851,10 +951,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -862,7 +962,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       Icon(
                         Icons.content_copy,
                         size: 18,
-                        color: Colors.grey[400],
+                        color: colorScheme.onSurface.withOpacity(0.4),
                       ),
                   ],
                 ),
@@ -889,7 +989,9 @@ class ShipmentDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -899,16 +1001,19 @@ class ShipmentDetailsSheet extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 14,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: Color(0xFF1F2937),
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -917,7 +1022,14 @@ class ShipmentDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteTimeline(String currentStage, String? currentStageDisplay) {
+  Widget _buildRouteTimeline(
+    BuildContext context,
+    String currentStage,
+    String? currentStageDisplay,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final stages = [
       {'id': 'china', 'name': 'China', 'icon': Icons.flight_takeoff},
       {'id': 'ethiopia', 'name': 'Ethiopia', 'icon': Icons.connecting_airports},
@@ -934,12 +1046,12 @@ class ShipmentDetailsSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF0EA5E9).withOpacity(0.1), Colors.white],
+          colors: [colorScheme.primary.withOpacity(0.1), theme.cardColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF0EA5E9).withOpacity(0.2)),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -950,22 +1062,18 @@ class ShipmentDetailsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0EA5E9).withOpacity(0.2),
+                  color: colorScheme.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.route,
-                  color: Color(0xFF0EA5E9),
-                  size: 24,
-                ),
+                child: Icon(Icons.route, color: colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Shipping Route',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -985,25 +1093,25 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isActive
-                            ? const Color(0xFF0EA5E9)
-                            : Colors.grey[300],
+                        color:
+                            isActive
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isCurrent ? Colors.white : Colors.transparent,
                           width: 3,
                         ),
-                        boxShadow: isCurrent
-                            ? [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF0EA5E9,
-                                  ).withOpacity(0.4),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                              ]
-                            : null,
+                        boxShadow:
+                            isCurrent
+                                ? [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                                : null,
                       ),
                       child: Icon(
                         stage['icon'] as IconData,
@@ -1015,9 +1123,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       Container(
                         width: 2,
                         height: 40,
-                        color: isActive
-                            ? const Color(0xFF0EA5E9)
-                            : Colors.grey[300],
+                        color:
+                            isActive
+                                ? colorScheme.primary
+                                : colorScheme.outlineVariant,
                       ),
                   ],
                 ),
@@ -1033,9 +1142,10 @@ class ShipmentDetailsSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isActive
-                                ? const Color(0xFF1F2937)
-                                : Colors.grey[400],
+                            color:
+                                isActive
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onSurface.withOpacity(0.4),
                           ),
                         ),
                         if (isCurrent && currentStageDisplay != null)
@@ -1046,14 +1156,14 @@ class ShipmentDetailsSheet extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0EA5E9).withOpacity(0.1),
+                              color: colorScheme.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               currentStageDisplay,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF0EA5E9),
+                                color: colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1070,12 +1180,15 @@ class ShipmentDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusUpdates(List updates) {
+  Widget _buildStatusUpdates(BuildContext context, List updates) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1092,12 +1205,12 @@ class ShipmentDetailsSheet extends StatelessWidget {
                 child: const Icon(Icons.update, color: Colors.purple, size: 24),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Status Updates',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1125,9 +1238,9 @@ class ShipmentDetailsSheet extends StatelessWidget {
                       children: [
                         Text(
                           update['message'] ?? update.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF1F2937),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         if (update['timestamp'] != null)
@@ -1135,7 +1248,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
                             update['timestamp'],
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ),
                       ],
@@ -1151,12 +1264,15 @@ class ShipmentDetailsSheet extends StatelessWidget {
   }
 
   // Admin Notes Section
-  Widget _buildAdminNotes(String adminNotes) {
+  Widget _buildAdminNotes(BuildContext context, String adminNotes) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1177,12 +1293,12 @@ class ShipmentDetailsSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Admin Notes',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -1197,9 +1313,9 @@ class ShipmentDetailsSheet extends StatelessWidget {
             ),
             child: Text(
               adminNotes,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF1F2937),
+                color: colorScheme.onSurface,
                 height: 1.5,
               ),
             ),
