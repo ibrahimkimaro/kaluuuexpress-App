@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 /// Handles all API requests with automatic token management
 class ApiService {
   // Base URL - Change this to your production URL
-  static const String baseUrl = 'http://157.245.227.236'; // Production Server
+  static const String baseUrl = 'http://192.168.0.2:8000'; // Production Server
   // static const String baseUrl = 'http://192.168.1.154:8000'; // For Android Emulator
   // static const String baseUrl = 'http://localhost:8000'; // For iOS Simulator
 
@@ -174,6 +174,17 @@ class ApiService {
       // Format 1: Direct error field
       if (data['error'] != null) {
         errorMessage = data['error'].toString();
+      }
+      // phone number error
+      else if ((data['phone_number'] != null)) {
+        errorMessage = data["phone_number"]
+            .toString()
+            .replaceAll('[', '')
+            .replaceAll(']', '')
+            .replaceAll('.', ' ');
+        // print(errorMessage);
+      } else if ((data['password'] != null)) {
+        errorMessage = data["password"].toString();
       }
       // Format 2: Message field
       else if (data['message'] != null) {

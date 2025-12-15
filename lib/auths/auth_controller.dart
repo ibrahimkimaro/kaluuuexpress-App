@@ -62,103 +62,103 @@ class AuthController extends ChangeNotifier {
   }
 
   // Convert raw API errors into friendly, human-readable messages.
-  String _friendlyErrorMessage(ApiResponse? response, [Object? exception]) {
-    // Prefer explicit response.error if it's a readable string
-    try {
-      if (response != null) {
-        final raw = response.error;
-        final data = response.data;
+  // String _friendlyErrorMessage(ApiResponse? response, [Object? exception]) {
+  //   // Prefer explicit response.error if it's a readable string
+  //   try {
+  //     if (response != null) {
+  //       final raw = response.error;
+  //       final data = response.data;
+  //      print(data);
+  //     if (raw != null && raw.isNotEmpty) {
+  //       // Common phrases mapping
+  //       final lower = raw.toLowerCase();
+  //       if (lower.contains('invalid') && lower.contains('credential')) {
+  //         return 'Invalid credentials. Please check your email and password.';
+  //       }
+  //       //         if (lower.contains('non_field_errors') &&
+  //       //     (lower.contains('ErrorDetail') || lower.contains('credential'))) {
+  //       //   return 'Your account is blocked due to multiple login attempts. Please contact support.';
+  //       // }
+  //       if (lower.length >= 5 && lower.substring(0, 5) == "{'non") {
+  //         return 'Account is temporarily locked due to multiple failed login attempts. Please try again later.';
+  //       }
+  //       if (lower.contains('not found')) {
+  //         return 'Requested resource was not found.';
+  //       }
+  //       if (lower.contains('no internet') ||
+  //           lower.contains('socketexception')) {
+  //         return 'No internet connection. Check your network and try again.';
+  //       }
+  //       if (lower.contains('timeout') || lower.contains('request timeout')) {
+  //         return 'Request timed out. Please check your connection and try again.';
+  //       }
 
-        if (raw != null && raw.isNotEmpty) {
-          // Common phrases mapping
-          final lower = raw.toLowerCase();
-          if (lower.contains('invalid') && lower.contains('credential')) {
-            return 'Invalid credentials. Please check your email and password.';
-          }
-          //         if (lower.contains('non_field_errors') &&
-          //     (lower.contains('ErrorDetail') || lower.contains('credential'))) {
-          //   return 'Your account is blocked due to multiple login attempts. Please contact support.';
-          // }
-          if (lower.length >= 5 && lower.substring(0, 5) == "{'non") {
-            return 'Account is temporarily locked due to multiple failed login attempts. Please try again later.';
-          }
-          if (lower.contains('not found')) {
-            return 'Requested resource was not found.';
-          }
-          if (lower.contains('no internet') ||
-              lower.contains('socketexception')) {
-            return 'No internet connection. Check your network and try again.';
-          }
-          if (lower.contains('timeout') || lower.contains('request timeout')) {
-            return 'Request timed out. Please check your connection and try again.';
-          }
+  //       // If it's likely already user-friendly, return it
+  //       return raw;
+  //     }
 
-          // If it's likely already user-friendly, return it
-          return raw;
-        }
+  //     // If response data has structured errors (e.g., {'email': ['...']})
+  //     if (data != null && data is Map) {
+  //       // Common key 'detail' or 'message'
+  //       if (data['detail'] != null) return _cleanErrorString(data['detail']);
+  //       if (data['message'] != null)
+  //         return _cleanErrorString(data['message']);
 
-        // If response data has structured errors (e.g., {'email': ['...']})
-        if (data != null && data is Map) {
-          // Common key 'detail' or 'message'
-          if (data['detail'] != null) return _cleanErrorString(data['detail']);
-          if (data['message'] != null)
-            return _cleanErrorString(data['message']);
+  //       // Field errors: join messages and make keys human-friendly
+  //       final buffer = StringBuffer();
+  //       data.forEach((key, value) {
+  //         if (value == null) return;
+  //         final label = _readableKeyLabel(key.toString());
 
-          // Field errors: join messages and make keys human-friendly
-          final buffer = StringBuffer();
-          data.forEach((key, value) {
-            if (value == null) return;
-            final label = _readableKeyLabel(key.toString());
+  //         if (value is List) {
+  //           final items =
+  //               value
+  //                   .map((v) => _cleanErrorString(v))
+  //                   .where((s) => s.isNotEmpty)
+  //                   .toList();
 
-            if (value is List) {
-              final items =
-                  value
-                      .map((v) => _cleanErrorString(v))
-                      .where((s) => s.isNotEmpty)
-                      .toList();
+  //           if (label == 'Error') {
+  //             buffer.writeln(items.join(' '));
+  //           } else {
+  //             buffer.writeln('$label: ${items.join(' ')}');
+  //           }
+  //         } else if (value is Map) {
+  //           final inner = <String>[];
+  //           value.forEach((k, v) {
+  //             if (v is List) {
+  //               inner.add(
+  //                 '${_readableKeyLabel(k.toString())}: ${v.map((e) => _cleanErrorString(e)).join(' ')}',
+  //               );
+  //             } else {
+  //               inner.add(
+  //                 '${_readableKeyLabel(k.toString())}: ${_cleanErrorString(v)}',
+  //               );
+  //             }
+  //           });
+  //           buffer.writeln(inner.join(' '));
+  //         } else {
+  //           if (label == 'Error')
+  //             buffer.writeln(_cleanErrorString(value));
+  //           else
+  //             buffer.writeln('$label: ${_cleanErrorString(value)}');
+  //         }
+  //       });
 
-              if (label == 'Error') {
-                buffer.writeln(items.join(' '));
-              } else {
-                buffer.writeln('$label: ${items.join(' ')}');
-              }
-            } else if (value is Map) {
-              final inner = <String>[];
-              value.forEach((k, v) {
-                if (v is List) {
-                  inner.add(
-                    '${_readableKeyLabel(k.toString())}: ${v.map((e) => _cleanErrorString(e)).join(' ')}',
-                  );
-                } else {
-                  inner.add(
-                    '${_readableKeyLabel(k.toString())}: ${_cleanErrorString(v)}',
-                  );
-                }
-              });
-              buffer.writeln(inner.join(' '));
-            } else {
-              if (label == 'Error')
-                buffer.writeln(_cleanErrorString(value));
-              else
-                buffer.writeln('$label: ${_cleanErrorString(value)}');
-            }
-          });
+  //       final out = buffer.toString().trim();
+  //       if (out.isNotEmpty) return out;
+  //     }
+  //   }
+  //   } catch (_) {
+  //     // fallthrough to generic messages
+  //   }
 
-          final out = buffer.toString().trim();
-          if (out.isNotEmpty) return out;
-        }
-      }
-    } catch (_) {
-      // fallthrough to generic messages
-    }
+  //   // if (exception != null) {
+  //   //   // Avoid exposing raw exception details to users
+  //   //   return 'An unexpected error occurred. Please try again.';
+  //   // }
 
-    if (exception != null) {
-      // Avoid exposing raw exception details to users
-      return 'An unexpected error occurred. Please try again.';
-    }
-
-    return 'Operation failed. Please try again.';
-  }
+  //   return 'Operation failed. Please try again.';
+  // }
 
   // Clean various error value types into a concise human-readable string.
   String _cleanErrorString(Object? raw) {
@@ -288,7 +288,14 @@ class AuthController extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _errorMessage = _friendlyErrorMessage(null, e);
+      _errorMessage = _errorMessage
+          .toString()
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('.', ' ')
+          .replaceAll('{', ' ')
+          .replaceAll('}', ' ');
+      ;
       _isLoading = false;
       notifyListeners();
       return false;
@@ -314,13 +321,13 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = _friendlyErrorMessage(response);
+        _errorMessage = errorMessage;
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = _friendlyErrorMessage(null, e);
+      _errorMessage = errorMessage;
       _isLoading = false;
       notifyListeners();
       return false;
@@ -356,13 +363,13 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = _friendlyErrorMessage(response);
+        _errorMessage = errorMessage;
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = _friendlyErrorMessage(null, e);
+      _errorMessage = errorMessage;
       _isLoading = false;
       notifyListeners();
       return false;
@@ -400,13 +407,13 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = _friendlyErrorMessage(response);
+        _errorMessage = errorMessage;
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = _friendlyErrorMessage(null, e);
+      _errorMessage = errorMessage;
       _isLoading = false;
       notifyListeners();
       return false;
@@ -455,7 +462,7 @@ class AuthController extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _errorMessage = _friendlyErrorMessage(null, e);
+      _errorMessage = errorMessage;
       _isLoading = false;
       notifyListeners();
       return false;
@@ -473,7 +480,7 @@ class AuthController extends ChangeNotifier {
 
       _isLoading = false;
       if (!response.isSuccess) {
-        _errorMessage = _friendlyErrorMessage(response);
+        _errorMessage = errorMessage;
       }
       notifyListeners();
 
@@ -505,7 +512,7 @@ class AuthController extends ChangeNotifier {
 
       _isLoading = false;
       if (!response.isSuccess) {
-        _errorMessage = _friendlyErrorMessage(response);
+        _errorMessage = errorMessage;
       }
       notifyListeners();
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
@@ -54,6 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
+
+  String? phone_err;
 
   // Blue sky color scheme
   static const Color skyBlue = Color(0xFF4A90E2);
@@ -159,6 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _handleRegister() async {
+    // print("phone number is fail: ${phone_err}");
     if (!_acceptTerms) {
       Fluttertoast.showToast(
         msg: 'Please accept terms and conditions',
@@ -204,6 +208,14 @@ class _RegisterPageState extends State<RegisterPage> {
             (route) => false,
           );
         } else {
+          // final error = authController.errorMessage;
+          // print("details fails are: ${error?.toString()}");
+          // phone_err = error
+          //     ?.toString()
+          //     .replaceAll(',', "")
+          //     .replaceAll('phone_number', "");
+          // print(phone_err);
+          // if (error?.toString() == "phone_number") {}
           Fluttertoast.showToast(
             msg: authController.errorMessage ?? 'Registration failed',
             toastLength: Toast.LENGTH_LONG,
@@ -408,7 +420,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           Expanded(
                             child: TextFormField(
                               controller: _phoneController,
+                              forceErrorText: phone_err,
                               keyboardType: TextInputType.phone,
+                              // maxLength: 9,
                               decoration: InputDecoration(
                                 hintText: '76 123 4567',
                                 filled: true,
@@ -464,8 +478,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   RegExp(r'[^0-9]'),
                                   '',
                                 );
-                                if (digitsOnly.length < 7)
-                                  return 'Invalid phone number';
+                                if (digitsOnly.length < 7 ||
+                                    digitsOnly.length > 9)
+                                  return 'Invalid phone number must be 9 digts';
                                 return null;
                               },
                             ),
@@ -574,7 +589,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) return 'Required';
-                      if (value.length < 6) return 'Min 6 characters';
+                      if (value.length < 6 ||
+                          value.toString() != RegExp(r'[A-Za-z]'))
+                        return 'Min 6 characters';
                       return null;
                     },
                   ),
