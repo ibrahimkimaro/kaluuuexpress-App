@@ -622,6 +622,7 @@ class InvoiceDetailSheet extends StatelessWidget {
     final isPaid = invoice['payment_status'] == 'paid';
     final statusColor =
         isPaid ? const Color(0xFF00C853) : const Color(0xFFD32F2F);
+    final List<dynamic> payments = invoice['payments'] ?? [];
 
     return Container(
       decoration: BoxDecoration(
@@ -692,12 +693,10 @@ class InvoiceDetailSheet extends StatelessWidget {
           _buildDetailRow(context, 'Packages', invoice['packages']),
           _buildDetailRow(context, 'Quantity', '${invoice['quantity']}'),
           _buildDetailRow(context, 'Weight', '${invoice['weight_kg']} kg'),
-          _buildDetailRow(
-            context,
-            'Price per Kg',
-            'TSh ${_parseNum(invoice['price_per_kg']).toStringAsFixed(2)}',
-          ),
+
           const Divider(height: 32),
+
+          // Total Amount Section
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -712,23 +711,55 @@ class InvoiceDetailSheet extends StatelessWidget {
               Text(
                 'TSh ${_parseNum(invoice['total_amount']).toStringAsFixed(2)}',
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1565C0),
                 ),
               ),
             ],
           ),
-          _buildDetailRow(
-            context,
-            'Paid Bill',
-            'TSh ${_parseNum(invoice['paying_bill']).toStringAsFixed(2)}',
+
+          // Payment History Table
+          if (payments.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _buildPaymentTable(context, payments),
+          ],
+
+          const SizedBox(height: 24),
+
+          // Credit Amount (Remaining)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD32F2F).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFD32F2F).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Credit Amount',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFD32F2F),
+                  ),
+                ),
+                Text(
+                  'TSh ${_parseNum(invoice['credit_amount']).toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFD32F2F),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildDetailRow(
-            context,
-            'Credit Amount',
-            'TSh ${_parseNum(invoice['credit_amount']).toStringAsFixed(2)}',
-          ),
+
           const SizedBox(height: 32),
           if (!isPaid)
             SizedBox(
@@ -757,6 +788,85 @@ class InvoiceDetailSheet extends StatelessWidget {
             ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentTable(BuildContext context, List<dynamic> payments) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Payment History',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Table(
+          border: TableBorder.all(
+            color: Colors.grey.withOpacity(0.3),
+            width: 1,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          columnWidths: const {
+            0: FlexColumnWidth(1.0), // Date
+            1: FlexColumnWidth(1.3), // Paid Bill
+            2: FlexColumnWidth(1.0), // Method
+            3: FlexColumnWidth(1.2), // Ref No
+          },
+          children: [
+            // Header Row
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1)),
+              children: [
+                _buildTableHeaderCell('Date'),
+                _buildTableHeaderCell('Paid Bill'),
+                _buildTableHeaderCell('Method'),
+                _buildTableHeaderCell('Ref No.'),
+              ],
+            ),
+            // Data Rows
+            ...payments.map((payment) {
+              return TableRow(
+                children: [
+                  _buildTableCell(payment['date'] ?? ''),
+                  _buildTableCell(
+                    'TSh ${_parseNum(payment['amount']).toStringAsFixed(0)}',
+                  ),
+                  _buildTableCell(
+                    (payment['payment_method'] ?? '').toString().toUpperCase(),
+                  ),
+                  _buildTableCell(payment['reference_number'] ?? '-'),
+                ],
+              );
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableHeaderCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildTableCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12),
+        textAlign: TextAlign.center,
       ),
     );
   }

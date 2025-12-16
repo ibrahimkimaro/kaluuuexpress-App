@@ -42,20 +42,20 @@ class UserAccountPage extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildAnimatedProfileOption(
-                    context,
-                    4,
-                    Icons.settings_outlined,
-                    'Settings',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  // _buildAnimatedProfileOption(
+                  //   context,
+                  //   4,
+                  //   Icons.settings_outlined,
+                  //   'Settings',
+                  //   () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (context) => const SettingsPage(),
+                  //       ),
+                  //     );
+                  //   },
+                  // ),
                   _buildAnimatedProfileOption(
                     context,
                     5,

@@ -9,8 +9,9 @@ import 'package:flutter/foundation.dart';
 /// Handles all API requests with automatic token management
 class ApiService {
   // Base URL - Change this to your production URL
-  static const String baseUrl = 'http://192.168.0.2:8000'; // Production Server
-  // static const String baseUrl = 'http://192.168.1.154:8000'; // For Android Emulator
+  static const String baseUrl = 'http://157.245.227.236'; // Production Server
+  // static const String baseUrl =
+  //     'http://192.168.0.2:8000'; //For Android Emulator
   // static const String baseUrl = 'http://localhost:8000'; // For iOS Simulator
 
   static const String apiPrefix = '/api/auth';
@@ -40,10 +41,10 @@ class ApiService {
     _accessToken = await _storage.read(key: _accessTokenKey);
     _refreshToken = await _storage.read(key: _refreshTokenKey);
 
-    if (kDebugMode) {
-      print('API Service initialized');
-      print('Access Token: ${_accessToken != null ? "Present" : "None"}');
-    }
+    // if (kDebugMode) {
+    //   print('API Service initialized');
+    //   print('Access Token: ${_accessToken != null ? "Present" : "None"}');
+    // }
   }
 
   /// Save authentication tokens
@@ -85,9 +86,9 @@ class ApiService {
     await _storage.delete(key: _refreshTokenKey);
     await _storage.delete(key: _userDataKey);
 
-    if (kDebugMode) {
-      print('Auth data cleared');
-    }
+    // if (kDebugMode) {
+    //   print('Auth data cleared');
+    // }
   }
 
   /// Check if user is authenticated
@@ -153,12 +154,11 @@ class ApiService {
   }
 
   /// Handle API response
-  /// Handle API response
   ApiResponse _handleResponse(http.Response response) {
-    if (kDebugMode) {
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-    }
+    // if (kDebugMode) {
+    //   print('Response Status: ${response.statusCode}');
+    //   print('Response Body: ${response.body}');
+    // }
 
     try {
       final data = jsonDecode(response.body);
@@ -168,66 +168,128 @@ class ApiService {
         return ApiResponse.success(data);
       }
 
-      // Error case - extract error message from various possible formats
-      String? errorMessage;
-
-      // Format 1: Direct error field
-      if (data['error'] != null) {
-        errorMessage = data['error'].toString();
-      }
-      // phone number error
-      else if ((data['phone_number'] != null)) {
-        errorMessage = data["phone_number"]
-            .toString()
-            .replaceAll('[', '')
-            .replaceAll(']', '')
-            .replaceAll('.', ' ');
-        // print(errorMessage);
-      } else if ((data['password'] != null)) {
-        errorMessage = data["password"].toString();
-      }
-      // Format 2: Message field
-      else if (data['message'] != null) {
-        errorMessage = data['message'].toString();
-      }
-      // Format 3: Detail field (common in Django REST Framework)
-      else if (data['detail'] != null) {
-        errorMessage = data['detail'].toString();
-      }
-      // Format 4: Email field errors (common for registration)
-      else if (data['email'] != null && data['email'] is List) {
-        errorMessage = data['email'].first?.toString();
-      }
-      // Format 5: Phone number field errors
-      else if (data['phone_number'] != null && data['phone_number'] is List) {
-        errorMessage = data['phone_number'].first?.toString();
-      }
-      // Format 6: Password field errors
-      else if (data['password'] != null && data['password'] is List) {
-        errorMessage = data['password'].first?.toString();
-      }
-      // Format 7: Non-field errors
-      else if (data['non_field_errors'] != null &&
-          data['non_field_errors'] is List) {
-        errorMessage = data['non_field_errors'].first?.toString();
-      }
-      // Format 8: Generic error message
-      else {
-        errorMessage = 'Request failed with status ${response.statusCode}';
-      }
+      // Error case - extract error message
+      final errorMessage = _parseErrorMessage(data);
 
       return ApiResponse.error(
-        errorMessage ?? 'Unknown error',
+        errorMessage,
         statusCode: response.statusCode,
         data: data,
       );
     } catch (e) {
-      // If response is not JSON or empty
+      // If response is not JSON (e.g. Python string representation with single quotes)
+      final errorMessage = _parseErrorMessage(response.body);
       return ApiResponse.error(
-        response.body.isNotEmpty ? response.body : 'Failed to parse response',
+        errorMessage.isNotEmpty ? errorMessage : 'Failed to parse response',
         statusCode: response.statusCode,
       );
     }
+  }
+
+  /// Parse error message from various backend formats
+  String _parseErrorMessage(dynamic data) {
+    if (data == null) return 'Unknown error occurred';
+
+    try {
+      // 1. If it's a simple string, check if it contains Python-style ErrorDetail
+      if (data is String) {
+        // Check for ErrorDetail(string='...', ...) pattern
+        if (data.contains('ErrorDetail')) {
+          // Try to capture the content inside string='...'
+          final RegExp regex = RegExp(r"string='([^']*)'");
+          final match = regex.firstMatch(data);
+          if (match != null) {
+            return match.group(1) ?? 'An error occurred';
+          }
+
+          // Fallback: try to capture string="..." (double quotes)
+          final RegExp regexDouble = RegExp(r'string="([^"]*)"');
+          final matchDouble = regexDouble.firstMatch(data);
+          if (matchDouble != null) {
+            return matchDouble.group(1) ?? 'An error occurred';
+          }
+        }
+
+        // Check for simple Python dict string like {'key': 'value'}
+        if (data.trim().startsWith('{') && data.contains("'")) {
+          // If it contains non_field_errors, try to extract the message inside the list
+          if (data.contains('non_field_errors')) {
+            // Extract everything between [ and ]
+            final start = data.indexOf('[');
+            final end = data.lastIndexOf(']');
+            if (start != -1 && end != -1) {
+              final inner = data.substring(start + 1, end);
+              // If inner contains ErrorDetail, recurse or re-parse
+              if (inner.contains('ErrorDetail')) {
+                return _parseErrorMessage(inner);
+              }
+              // Otherwise just clean it
+              return inner.replaceAll("'", "").trim();
+            }
+          }
+
+          // Try to extract values from single-quoted strings
+          final RegExp valueRegex = RegExp(r":\s*'([^']*)'");
+          final matches = valueRegex.allMatches(data);
+          if (matches.isNotEmpty) {
+            return matches.map((m) => m.group(1)).join('\n');
+          }
+        }
+
+        return data;
+      }
+
+      // 2. If it's a Map
+      if (data is Map) {
+        // Check for common error keys first
+        if (data.containsKey('detail')) return data['detail'].toString();
+        if (data.containsKey('message')) return data['message'].toString();
+        if (data.containsKey('error')) return data['error'].toString();
+
+        // Check for non_field_errors
+        if (data.containsKey('non_field_errors')) {
+          final errors = data['non_field_errors'];
+          if (errors is List && errors.isNotEmpty) {
+            return errors.first.toString();
+          }
+        }
+
+        // Handle field-specific errors (e.g., {"email": ["Invalid email"]})
+        final List<String> errorMessages = [];
+        data.forEach((key, value) {
+          // Skip technical keys if needed, but usually we want to show them
+          final fieldName = _capitalize(key.toString().replaceAll('_', ' '));
+
+          if (value is List) {
+            // Join multiple errors for the same field
+            final fieldErrors = value.map((e) => e.toString()).join(', ');
+            errorMessages.add('$fieldName: $fieldErrors');
+          } else if (value is String) {
+            errorMessages.add('$fieldName: $value');
+          } else {
+            errorMessages.add('$fieldName: $value');
+          }
+        });
+
+        if (errorMessages.isNotEmpty) {
+          return errorMessages.join('\n');
+        }
+      }
+
+      // 3. If it's a List
+      if (data is List) {
+        return data.map((e) => e.toString()).join('\n');
+      }
+
+      return data.toString();
+    } catch (e) {
+      return 'An error occurred';
+    }
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   /// Generic GET request
@@ -242,9 +304,9 @@ class ApiService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
-      if (kDebugMode) {
-        print('GET Request: $uri');
-      }
+      // if (kDebugMode) {
+      //   print('GET Request: $uri');
+      // }
 
       var response = await http
           .get(uri, headers: _buildHeaders(includeAuth: requiresAuth))
@@ -269,9 +331,9 @@ class ApiService {
     } on TimeoutException {
       return ApiResponse.error('Request timeout');
     } catch (e) {
-      if (kDebugMode) {
-        print('GET Error: $e');
-      }
+      // if (kDebugMode) {
+      //   // print('GET Error: $e');
+      // }
       return ApiResponse.error('Network error: $e');
     }
   }
@@ -285,10 +347,10 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
 
-      if (kDebugMode) {
-        print('POST Request: $uri');
-        print('Body: $body');
-      }
+      // if (kDebugMode) {
+      //   print('POST Request: $uri');
+      //   print('Body: $body');
+      // }
 
       var response = await http
           .post(
@@ -321,9 +383,9 @@ class ApiService {
     } on TimeoutException {
       return ApiResponse.error('Request timeout');
     } catch (e) {
-      if (kDebugMode) {
-        print('POST Error: $e');
-      }
+      // if (kDebugMode) {
+      //   print('POST Error: $e');
+      // }
       return ApiResponse.error('Network error: $e');
     }
   }
@@ -337,10 +399,10 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
 
-      if (kDebugMode) {
-        print('PUT Request: $uri');
-        print('Body: $body');
-      }
+      // if (kDebugMode) {
+      //   print('PUT Request: $uri');
+      //   print('Body: $body');
+      // }
 
       var response = await http
           .put(

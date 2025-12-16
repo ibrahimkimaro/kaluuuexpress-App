@@ -87,6 +87,10 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
     });
   }
 
+  int _calculateTotalItems() {
+    return _boxes.fold(0, (sum, box) => sum + box.items.length);
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -158,6 +162,9 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
     } catch (e) {
       print('Logo not found, continuing without it');
     }
+
+    // Load Material Icons font
+    final iconFont = await PdfGoogleFonts.materialIcons();
 
     pdf.addPage(
       pw.MultiPage(
@@ -258,15 +265,17 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
                   _buildSummaryItem(
-                    'TOTAL BOXES',
-                    '${_boxes.length}',
-                    Icons.inbox_rounded.codePoint,
+                    'TOTAL ITEMS',
+                    '${_calculateTotalItems()}',
+                    // Icons.inventory_2_rounded.codePoint,
+                    iconFont,
                   ),
                   pw.Container(height: 40, width: 2, color: PdfColors.grey400),
                   _buildSummaryItem(
                     'TOTAL WEIGHT',
                     '${_calculateTotalWeight().toStringAsFixed(1)} KG',
-                    Icons.scale_rounded.codePoint,
+                    // Icons.scale_rounded.codePoint,
+                    iconFont,
                   ),
                 ],
               ),
@@ -391,14 +400,23 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
     return pdf;
   }
 
-  pw.Widget _buildSummaryItem(String label, String value, int iconCode) {
+  pw.Widget _buildSummaryItem(
+    String label,
+    String value,
+    // int iconCode,
+    pw.Font iconFont,
+  ) {
     return pw.Row(
       mainAxisSize: pw.MainAxisSize.min,
       children: [
-        pw.Text(
-          String.fromCharCode(iconCode),
-          style: pw.TextStyle(fontSize: 20, color: PdfColor.fromHex('#4A90E2')),
-        ),
+        // pw.Text(
+        //   String.fromCharCode(iconCode),
+        //   style: pw.TextStyle(
+        //     fontSize: 20,
+        //     color: PdfColor.fromHex('#4A90E2'),
+        //     font: iconFont,
+        //   ),
+        // ),
         pw.SizedBox(width: 10),
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -803,7 +821,7 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
                           child: Column(
                             children: [
                               const Text(
-                                'Boxes',
+                                'Total Items',
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
@@ -811,7 +829,7 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_boxes.length}',
+                                '${_calculateTotalItems()}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -1077,7 +1095,7 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
   Widget _buildItemRow(int boxIndex, int itemIndex, PackingItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(12),
@@ -1121,7 +1139,7 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
             ),
             validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 11),
 
           // Contact
           TextFormField(
@@ -1137,8 +1155,15 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Required';
+              final digitsOnly = value.replaceAll(RegExp(r'[^0-9]'), '');
+              if (digitsOnly.length < 7 || digitsOnly.length > 10)
+                return 'Invalid phone number must be 10 digts';
+              return null;
+            },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 11),
 
           // Description
           TextFormField(
@@ -1155,7 +1180,7 @@ class _CreatePackingListPageState extends State<CreatePackingListPage> {
             ),
             validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 11),
 
           // Weight
           TextFormField(

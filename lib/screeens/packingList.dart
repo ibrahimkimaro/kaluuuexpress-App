@@ -1,4 +1,4 @@
-// packing_list.dart - Main Packing List Page
+// packing_list.dart - With Date Range Filter
 
 import 'package:flutter/material.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/createParkingList.dart';
@@ -6,15 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
 import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
-import 'package:open_file/open_file.dart'; // New import for opening files
-import 'package:path_provider/path_provider.dart'; // New import for temporary directory
-import 'dart:io'; // New import for File operations
-import 'package:flutter/services.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:http/http.dart' as http;
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class PackingListPage extends StatefulWidget {
   const PackingListPage({super.key});
@@ -27,22 +21,24 @@ class _PackingListPageState extends State<PackingListPage> {
   static const Color skyBlue = Color(0xFF4A90E2);
   static const Color lightSkyBlue = Color(0xFF87CEEB);
   static const Color deepSkyBlue = Color(0xFF2E73B8);
+
   final ApiService _apiService = ApiService();
   List<Map<String, dynamic>> _packingLists = [];
+  List<Map<String, dynamic>> _filteredPackingLists = [];
   bool _isLoading = true;
-  bool _isStaff = false;
+
+  // Filter variables
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool _isFilterActive = false;
 
   @override
   void initState() {
     super.initState();
-    _checkStaffStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AuthController>(context, listen: false).fetchProfile();
+    });
     _loadPackingLists();
-  }
-
-  void _checkStaffStatus() {
-    final authController = Provider.of<AuthController>(context, listen: false);
-    // Check if user is staff from userData
-    _isStaff = authController.userData?['full_name'] == "ibrahim kimaro";
   }
 
   Future<void> _loadPackingLists() async {
@@ -54,6 +50,7 @@ class _PackingListPageState extends State<PackingListPage> {
       if (response.isSuccess && response.data != null) {
         setState(() {
           _packingLists = List<Map<String, dynamic>>.from(response.data);
+          _applyFilter();
           _isLoading = false;
         });
       } else {
@@ -69,22 +66,344 @@ class _PackingListPageState extends State<PackingListPage> {
     }
   }
 
+  void _applyFilter() {
+    if (_startDate == null && _endDate == null) {
+      _filteredPackingLists = List.from(_packingLists);
+      _isFilterActive = false;
+    } else {
+      _isFilterActive = true;
+      _filteredPackingLists =
+          _packingLists.where((packing) {
+            try {
+              final dateStr = packing['date'] as String;
+              final packingDate = DateTime.parse(dateStr);
+
+              if (_startDate != null && _endDate != null) {
+                return packingDate.isAfter(
+                      _startDate!.subtract(const Duration(days: 1)),
+                    ) &&
+                    packingDate.isBefore(
+                      _endDate!.add(const Duration(days: 1)),
+                    );
+              } else if (_startDate != null) {
+                return packingDate.isAfter(
+                  _startDate!.subtract(const Duration(days: 1)),
+                );
+              } else if (_endDate != null) {
+                return packingDate.isBefore(
+                  _endDate!.add(const Duration(days: 1)),
+                );
+              }
+              return true;
+            } catch (e) {
+              return false;
+            }
+          }).toList();
+    }
+  }
+
+  void _showFilterDialog() {
+    DateTime? tempStartDate = _startDate;
+    DateTime? tempEndDate = _endDate;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [lightSkyBlue, skyBlue],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.filter_alt_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Filter by Date',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: skyBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Start Date
+                      const Text(
+                        'From Date',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: tempStartDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: skyBlue,
+                                    onPrimary: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setDialogState(() => tempStartDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: skyBlue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                tempStartDate != null
+                                    ? '${tempStartDate!.day}/${tempStartDate!.month}/${tempStartDate!.year}'
+                                    : 'Select start date',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                      tempStartDate != null
+                                          ? Colors.black87
+                                          : Colors.grey[500],
+                                ),
+                              ),
+                              const Spacer(),
+                              if (tempStartDate != null)
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    setDialogState(() => tempStartDate = null);
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // End Date
+                      const Text(
+                        'To Date',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: tempEndDate ?? DateTime.now(),
+                            firstDate: tempStartDate ?? DateTime(2020),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: skyBlue,
+                                    onPrimary: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (picked != null) {
+                            setDialogState(() => tempEndDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: skyBlue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                tempEndDate != null
+                                    ? '${tempEndDate!.day}/${tempEndDate!.month}/${tempEndDate!.year}'
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                      tempEndDate != null
+                                          ? Colors.black87
+                                          : Colors.grey[500],
+                                ),
+                              ),
+                              const Spacer(),
+                              if (tempEndDate != null)
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    setDialogState(() => tempEndDate = null);
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _startDate = null;
+                                  _endDate = null;
+                                  _applyFilter();
+                                });
+                                Navigator.pop(context);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.grey),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Clear',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [lightSkyBlue, skyBlue, deepSkyBlue],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _startDate = tempStartDate;
+                                    _endDate = tempEndDate;
+                                    _applyFilter();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Apply Filter',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+    );
+  }
+
   Future<void> _downloadPDF(int id, String code) async {
     setState(() => _isLoading = true);
     try {
       final response = await _apiService.downloadPackingList(id);
 
       if (response.isSuccess && response.data != null) {
-        // Get temporary directory
         final output = await getTemporaryDirectory();
-        final file = File('${output.path}/packing_list_${code}.pdf');
-
-        // Write bytes to file
+        final file = File('${output.path}/packing_list_$code.pdf');
         await file.writeAsBytes(response.data as List<int>);
 
-        // Open file
         final result = await OpenFile.open(file.path);
-
         if (result.type != ResultType.done) {
           Fluttertoast.showToast(
             msg: 'Could not open PDF: ${result.message}',
@@ -93,7 +412,7 @@ class _PackingListPageState extends State<PackingListPage> {
         }
       } else {
         Fluttertoast.showToast(
-          msg: 'Failed to download PDF: ${response.error ?? "Unknown error"}',
+          msg: 'Failed to download PDF',
           backgroundColor: Colors.red,
         );
       }
@@ -123,48 +442,133 @@ class _PackingListPageState extends State<PackingListPage> {
           style: TextStyle(color: skyBlue, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                onRefresh: _loadPackingLists,
-                child:
-                    _packingLists.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _packingLists.length,
-                          itemBuilder: (context, index) {
-                            return _buildPackingListCard(_packingLists[index]);
-                          },
-                        ),
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.filter_alt_rounded),
+                onPressed: _showFilterDialog,
               ),
-      floatingActionButton:
-          _isStaff
-              ? FloatingActionButton.extended(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreatePackingListPage(),
+              if (_isFilterActive)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
                     ),
-                  );
-                  if (result == true) {
-                    _loadPackingLists();
-                  }
-                },
-                backgroundColor: skyBlue,
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text(
-                  'Create List',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              )
-              : null,
+            ],
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Filter indicator
+          if (_isFilterActive)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: skyBlue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: skyBlue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.filter_alt, color: skyBlue, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _startDate != null && _endDate != null
+                          ? 'From ${_startDate!.day}/${_startDate!.month}/${_startDate!.year} to ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
+                          : _startDate != null
+                          ? 'From ${_startDate!.day}/${_startDate!.month}/${_startDate!.year}'
+                          : 'Until ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: skyBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () {
+                      setState(() {
+                        _startDate = null;
+                        _endDate = null;
+                        _applyFilter();
+                      });
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    color: skyBlue,
+                  ),
+                ],
+              ),
+            ),
+
+          // List
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                      onRefresh: _loadPackingLists,
+                      child:
+                          _filteredPackingLists.isEmpty
+                              ? _buildEmptyState()
+                              : ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _filteredPackingLists.length,
+                                itemBuilder: (context, index) {
+                                  return _buildPackingListCard(
+                                    _filteredPackingLists[index],
+                                  );
+                                },
+                              ),
+                    ),
+          ),
+        ],
+      ),
+      floatingActionButton: Consumer<AuthController>(
+        builder: (context, auth, child) {
+          final canCreate =
+              auth.userData?['can_create_packing_list'] == true ||
+              auth.userData?['is_superuser'] == true;
+
+          if (!canCreate) return const SizedBox.shrink();
+
+          return FloatingActionButton.extended(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreatePackingListPage(),
+                ),
+              );
+              if (result == true) {
+                _loadPackingLists();
+              }
+            },
+            backgroundColor: skyBlue,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Create List',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -176,17 +580,17 @@ class _PackingListPageState extends State<PackingListPage> {
           Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No packing lists yet',
+            _isFilterActive ? 'No results found' : 'No packing lists yet',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (_isStaff) ...[
+          if (_isFilterActive) ...[
             const SizedBox(height: 8),
             Text(
-              'Tap the button below to create one',
+              'Try adjusting your filter',
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
@@ -200,8 +604,6 @@ class _PackingListPageState extends State<PackingListPage> {
     final date = packingList['date'] ?? '';
     final totalCartons = packingList['total_cartons'] ?? 0;
     final totalWeight = packingList['total_weight'] ?? 0;
-    final status = packingList['status'] ?? 'draft';
-    final createdBy = packingList['created_by_name'] ?? 'Unknown';
     final hasPdf = packingList['pdf_file'] != null;
 
     return Container(
@@ -220,10 +622,7 @@ class _PackingListPageState extends State<PackingListPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Show details dialog
-            _showDetailsDialog(packingList);
-          },
+          onTap: hasPdf ? () => _downloadPDF(packingList['id'], code) : null,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -280,30 +679,6 @@ class _PackingListPageState extends State<PackingListPage> {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            status == 'finalized'
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        status == 'finalized' ? 'Finalized' : 'Draft',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color:
-                              status == 'finalized'
-                                  ? Colors.green
-                                  : Colors.orange,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -323,21 +698,6 @@ class _PackingListPageState extends State<PackingListPage> {
                         'Weight',
                         '$totalWeight KG',
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Created by: $createdBy',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -410,138 +770,6 @@ class _PackingListPageState extends State<PackingListPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showDetailsDialog(Map<String, dynamic> packingList) {
-    final items = List<Map<String, dynamic>>.from(packingList['items'] ?? []);
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 600),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [lightSkyBlue, skyBlue],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          packingList['code'],
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: skyBlue,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child:
-                        items.isEmpty
-                            ? const Center(child: Text('No items'))
-                            : ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final item = items[index];
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[50],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: skyBlue,
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              item['item_code'] ?? '',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              item['client_name'] ?? '',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                          Text(
-                                            '${item['weight']} KG',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: skyBlue,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        item['item_description'] ?? '',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                  ),
-                ],
-              ),
-            ),
-          ),
     );
   }
 }
