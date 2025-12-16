@@ -6,6 +6,9 @@ import 'package:kaluu_Epreess_Cargo/auths/login.dart';
 import 'package:kaluu_Epreess_Cargo/auths/register.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
 import 'package:kaluu_Epreess_Cargo/screeens/splash_screen.dart';
+import 'package:app_links/app_links.dart';
+import 'package:kaluu_Epreess_Cargo/auths/reset_password_page.dart';
+import 'dart:async';
 
 import 'package:kaluu_Epreess_Cargo/providers/theme_provider.dart';
 
@@ -87,15 +90,62 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
   @override
   void initState() {
     super.initState();
+    _initDeepLinks();
     // Initialize auth state
     Future.microtask(() {
       if (mounted) {
         Provider.of<AuthController>(context, listen: false).init();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Check initial link
+    try {
+      final initialLink = await _appLinks.getInitialLink();
+      if (initialLink != null) {
+        _handleDeepLink(initialLink);
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+
+    // Listen for new links
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Expected format: kaluuapp://reset-password/{uid}/{token}
+    if (uri.host == 'reset-password') {
+      final segments = uri.pathSegments;
+      if (segments.length >= 2) {
+        final uid = segments[0];
+        final token = segments[1];
+
+        // Navigate to reset password page
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ResetPasswordPage(uid: uid, token: token),
+          ),
+        );
+      }
+    }
   }
 
   @override

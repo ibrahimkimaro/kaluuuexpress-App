@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 
@@ -162,85 +164,6 @@ class AuthController extends ChangeNotifier {
   //   return 'Operation failed. Please try again.';
   // }
 
-  // Clean various error value types into a concise human-readable string.
-  String _cleanErrorString(Object? raw) {
-    if (raw == null) return '';
-    try {
-      if (raw is String) {
-        // Many APIs wrap errors in ErrorDetail(...) or include tuple-like formats.
-        // Extract quoted message if present: ErrorDetail(string='msg', code='...')
-        // Some backends return ErrorDetail(string='message', code='...') wrappers.
-        if (raw.contains('ErrorDetail')) {
-          final idx = raw.indexOf('string=');
-          if (idx != -1) {
-            var sub = raw.substring(idx + 7); // after "string="
-            if (sub.isNotEmpty) {
-              // sub may start with single or double quote
-              final first = sub[0];
-              if (first == '\'' || first == '"') {
-                final end = sub.indexOf(first, 1);
-                if (end != -1) return sub.substring(1, end).trim();
-              } else {
-                final end = sub.indexOf(',');
-                if (end != -1) return sub.substring(0, end).trim();
-              }
-            }
-          }
-        }
-
-        // If it looks like a JSON map string, attempt to extract inner messages
-        if ((raw.startsWith('{') && raw.endsWith('}')) || raw.contains(':')) {
-          // fallback: strip braces and quotes
-          final cleaned = raw.replaceAll(RegExp(r'[\{\}\[\]"]'), '');
-          return cleaned.trim();
-        }
-
-        return raw.trim();
-      }
-
-      if (raw is List) {
-        return raw
-            .map((e) => _cleanErrorString(e))
-            .where((s) => s.isNotEmpty)
-            .join(' ');
-      }
-
-      if (raw is Map) {
-        final parts = <String>[];
-        raw.forEach((k, v) {
-          final label = _readableKeyLabel(k.toString());
-          final msg = _cleanErrorString(v);
-          if (msg.isNotEmpty) parts.add('$label: $msg');
-        });
-        return parts.join(' ');
-      }
-
-      return raw.toString();
-    } catch (_) {
-      return raw.toString();
-    }
-  }
-
-  // (removed helper) capitalization is handled by _readableKeyLabel now
-
-  // Make a readable label from api keys like 'non_field_error' -> 'Error' or 'Non field error'
-  String _readableKeyLabel(String key) {
-    final lower = key.toLowerCase();
-    // Map common generic keys to friendly labels
-    if (lower == 'non_field_error' ||
-        lower == 'non_field_errors' ||
-        lower == 'non_field' ||
-        lower == 'detail') {
-      return 'Error';
-    }
-    // replace underscores and dashes with spaces and capitalize each word
-    final parts = key.replaceAll('_', ' ').replaceAll('-', ' ').split(' ');
-    final capitalized = parts
-        .map((p) => p.isEmpty ? p : (p[0].toUpperCase() + p.substring(1)))
-        .join(' ');
-    return capitalized;
-  }
-
   /// Register new user
   Future<bool> register({
     required String email,
@@ -273,18 +196,7 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        // Extract error message from response.data
-        if (response.data != null) {
-          _errorMessage = response.data.toString();
-          _errorMessage = response.data['email'][0];
-        }
-        // if (response.statusCode == 500) {
-        //   _errorMessage = "Please check phone number";
-        // }
-        else {
-          _errorMessage = response.message ?? 'Unknown error';
-        }
-
+        _errorMessage = response.error ?? 'Registration failed';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -303,6 +215,9 @@ class AuthController extends ChangeNotifier {
       return false;
     }
   }
+
+  int _failedAttempts = 0;
+  bool _isLocked = false;
 
   /// Login user
   Future<bool> login({required String email, required String password}) async {
@@ -323,13 +238,40 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = errorMessage;
-        _isLoading = false;
-        notifyListeners();
+        if (!_isLocked) {
+          _failedAttempts += 1;
+
+          String errorMessage;
+
+          if (_failedAttempts >= 5) {
+            errorMessage =
+                "Your account is temporarily locked due to multiple failed login attempts. Please wait 3 minutes.";
+            _isLocked = true;
+
+            // Start a timer to reset after 3 minutes
+            Timer(Duration(minutes: 2), () {
+              _failedAttempts = 0;
+              _isLocked = false;
+            });
+          } else {
+            errorMessage = "Please check your email and password";
+          }
+
+          _errorMessage = errorMessage;
+          _isLoading = false;
+          notifyListeners();
+        } else {
+          // If user tries during lock
+          _errorMessage =
+              "Your account is temporarily locked due to multiple failed login attempts. Please wait 3 minutes.";
+          _isLoading = false;
+          notifyListeners();
+        }
+
         return false;
       }
     } catch (e) {
-      _errorMessage = errorMessage;
+      _errorMessage = "faild to login";
       _isLoading = false;
       notifyListeners();
       return false;
@@ -365,7 +307,7 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = errorMessage;
+        _errorMessage = response.error ?? 'Failed to fetch profile';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -409,7 +351,7 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = errorMessage;
+        _errorMessage = response.error ?? 'Failed to update profile';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -457,8 +399,7 @@ class AuthController extends ChangeNotifier {
         await logout();
         return true;
       } else {
-        _errorMessage = response.message;
-        print(_errorMessage);
+        _errorMessage = response.error ?? 'Failed to change password';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -482,7 +423,7 @@ class AuthController extends ChangeNotifier {
 
       _isLoading = false;
       if (!response.isSuccess) {
-        _errorMessage = errorMessage;
+        _errorMessage = response.error ?? 'Failed to request password reset';
       }
       notifyListeners();
 
@@ -514,7 +455,7 @@ class AuthController extends ChangeNotifier {
 
       _isLoading = false;
       if (!response.isSuccess) {
-        _errorMessage = errorMessage;
+        _errorMessage = response.error ?? 'Failed to reset password';
       }
       notifyListeners();
 

@@ -55,6 +55,7 @@ dependencies:
   path_provider: ^2.1.5
   flutter_launcher_icons: ^0.14.4
   open_file: ^3.5.10
+  app_links: ^6.4.1
   # flutter_native_splash: ^2.2.16
 
 dev_dependencies:

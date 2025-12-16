@@ -471,18 +471,18 @@ class _RegisterPageState extends State<RegisterPage> {
                                   vertical: 14,
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty)
-                                  return 'Required';
-                                final digitsOnly = value.replaceAll(
-                                  RegExp(r'[^0-9]'),
-                                  '',
-                                );
-                                if (digitsOnly.length < 7 ||
-                                    digitsOnly.length > 9)
-                                  return 'Invalid phone number must be 9 digts';
-                                return null;
-                              },
+                              // validator: (value) {
+                              //   if (value == null || value.isEmpty)
+                              //     return 'Required';
+                              //   final digitsOnly = value.replaceAll(
+                              //     RegExp(r'[^0-9]'),
+                              //     '',
+                              //   );
+                              //   if (digitsOnly.length < 7 ||
+                              //       digitsOnly.length > 9)
+                              //     return 'Invalid phone number must be 9 digts';
+                              //   return null;
+                              // },
                             ),
                           ),
                         ],
@@ -588,10 +588,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
-                      if (value.length < 6 ||
-                          value.toString() != RegExp(r'[A-Za-z]'))
-                        return 'Min 6 characters';
+                      if (value == null || value.isEmpty) {
+                        return 'Password required';
+                      }
+
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+
+                      if (!RegExp(r'[A-Za-z]').hasMatch(value)) {
+                        return 'Include at least one letter';
+                      }
+
+                      if (!RegExp(r'\d').hasMatch(value)) {
+                        return 'Include at least one number';
+                      }
+
                       return null;
                     },
                   ),
