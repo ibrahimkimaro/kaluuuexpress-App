@@ -52,11 +52,15 @@ class _FindBranchState extends State<FindBranch> {
       appBar: AppBar(
         title: Text(
           'Our Branch',
-          style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: colorScheme.primary,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         foregroundColor: colorScheme.primary,
         iconTheme: IconThemeData(color: colorScheme.primary),
       ),
@@ -71,9 +75,10 @@ class _FindBranchState extends State<FindBranch> {
                 color: theme.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: isDark
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.05),
+                    color:
+                        isDark
+                            ? Colors.black.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -104,7 +109,7 @@ class _FindBranchState extends State<FindBranch> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'KALUU EXPRESS CARGO',
+                    'Kaluu/Bozen Cargo',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -136,9 +141,10 @@ class _FindBranchState extends State<FindBranch> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.08),
+                    color:
+                        isDark
+                            ? Colors.black.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -179,15 +185,30 @@ class _FindBranchState extends State<FindBranch> {
                   const SizedBox(height: 16),
 
                   // City
-                  _buildInfoRow(context, Icons.location_city_outlined, 'City', city),
+                  _buildInfoRow(
+                    context,
+                    Icons.location_city_outlined,
+                    'City',
+                    city,
+                  ),
                   const SizedBox(height: 16),
 
                   // Street Address
-                  _buildInfoRow(context, Icons.place_outlined, 'Street', address),
+                  _buildInfoRow(
+                    context,
+                    Icons.place_outlined,
+                    'Street',
+                    address,
+                  ),
                   const SizedBox(height: 16),
 
                   // Phone Number
-                  _buildInfoRow(context, Icons.phone_outlined, 'Phone', phoneNumber),
+                  _buildInfoRow(
+                    context,
+                    Icons.phone_outlined,
+                    'Phone',
+                    phoneNumber,
+                  ),
                 ],
               ),
             ),
@@ -218,9 +239,16 @@ class _FindBranchState extends State<FindBranch> {
                     label: 'Send Message',
                     color: colorScheme.primary,
                     gradient: LinearGradient(
-                      colors: isDark
-                        ? [colorScheme.primary, colorScheme.primaryContainer]
-                        : [const Color(0xFF0EA5E9), const Color(0xFF0284C7)],
+                      colors:
+                          isDark
+                              ? [
+                                colorScheme.primary,
+                                colorScheme.primaryContainer,
+                              ]
+                              : [
+                                const Color(0xFF0EA5E9),
+                                const Color(0xFF0284C7),
+                              ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -250,9 +278,10 @@ class _FindBranchState extends State<FindBranch> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.08),
+                    color:
+                        isDark
+                            ? Colors.black.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -287,9 +316,17 @@ class _FindBranchState extends State<FindBranch> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildWorkingHourRow(context, 'Monday - Friday', '8:00 AM - 6:00 PM'),
+                  _buildWorkingHourRow(
+                    context,
+                    'Monday - Friday',
+                    '8:00 AM - 6:00 PM',
+                  ),
                   const SizedBox(height: 12),
-                  _buildWorkingHourRow(context, 'Saturday', '9:00 AM - 4:00 PM'),
+                  _buildWorkingHourRow(
+                    context,
+                    'Saturday',
+                    '9:00 AM - 4:00 PM',
+                  ),
                   const SizedBox(height: 12),
                   _buildWorkingHourRow(context, 'Sunday', 'Closed'),
                 ],
@@ -303,7 +340,12 @@ class _FindBranchState extends State<FindBranch> {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(

@@ -120,7 +120,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'KALUU EXPRESS CARGO',
+                    'Kaluu/Bozen Cargo',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                       ],
                     ),
                     child: Text(
-                      'Kaluu Express Cargo was founded with a vision to revolutionize air freight services in East Africa. Starting from Tanzania, we have grown to become a leading air cargo provider, connecting businesses and individuals across the region.\n\n'
+                      'Kaluu/Bozen Cargo was founded with a vision to revolutionize air freight services in East Africa. Starting from Tanzania, we have grown to become a leading air cargo provider, connecting businesses and individuals across the region.\n\n'
                       'Our journey began with a simple mission: to make international shipping accessible, reliable, and affordable for everyone. Today, we serve thousands of customers, handling everything from small parcels to large commercial shipments with the same dedication and care.\n\n'
                       'With our state-of-the-art tracking technology and commitment to customer satisfaction, we continue to set new standards in the air cargo industry.',
                       style: TextStyle(

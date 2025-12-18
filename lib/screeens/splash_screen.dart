@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/onboarding.dart';
-import 'package:kaluu_Epreess_Cargo/auths/register.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
-import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
+import 'package:kaluu_bozen_cargo/screeens/onboarding.dart';
+import 'package:kaluu_bozen_cargo/auths/register.dart';
+import 'package:kaluu_bozen_cargo/screeens/screenNavigation.dart';
+import 'package:kaluu_bozen_cargo/auths/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
 
-/// API Service with interceptor for Kaluu Express Cargo
+/// API Service with interceptor for Kaluu/Bozen Cargo
 /// Handles all API requests with automatic token management
 class ApiService {
   // Base URL - Change this to your production URL

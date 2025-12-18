@@ -4,7 +4,7 @@
 // import 'package:flutter/foundation.dart';
 // import 'package:flutter/material.dart';
 // import 'dart:convert';
-// import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
+// import 'package:kaluu_bozen_cargo/auths/api_service.dart';
 
 // class NotificationService {
 //   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -134,7 +134,7 @@
 
 //     await _localNotifications.show(
 //       message.hashCode,
-//       message.notification?.title ?? 'Kaluu Express',
+//       message.notification?.title ?? 'Kaluu/Bozen Cargo',
 //       message.notification?.body,
 //       details,
 //       payload: jsonEncode(message.data),

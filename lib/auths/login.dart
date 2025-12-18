@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kaluu_Epreess_Cargo/auths/forgetPassword.dart';
+import 'package:kaluu_bozen_cargo/auths/forgetPassword.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
-import 'package:kaluu_Epreess_Cargo/auths/register.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
+import 'package:kaluu_bozen_cargo/auths/auth_controller.dart';
+import 'package:kaluu_bozen_cargo/auths/register.dart';
+import 'package:kaluu_bozen_cargo/screeens/screenNavigation.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);

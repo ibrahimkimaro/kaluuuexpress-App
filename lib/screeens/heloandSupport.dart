@@ -54,7 +54,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: 'Kaluuexpressaircargo@gmail.com',
-      query: 'subject=Support Request - Kaluu Express Cargo',
+      query: 'subject=Support Request - Kaluu/Bozen Cargo',
     );
 
     try {
@@ -133,10 +133,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
         ),
         title: const Text(
           'Help & Support',
-          style: TextStyle(
-            color: skyBlue,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: skyBlue, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -345,7 +342,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Kaluu Express Cargo',
+                                'Kaluu/Bozen Cargo',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[700],
@@ -424,10 +421,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -484,9 +478,7 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        isExpanded
-                            ? Icons.remove_rounded
-                            : Icons.add_rounded,
+                        isExpanded ? Icons.remove_rounded : Icons.add_rounded,
                         color: skyBlue,
                         size: 20,
                       ),

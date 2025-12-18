@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
+import 'package:kaluu_bozen_cargo/auths/api_service.dart';
 
 class MyInvoice extends StatefulWidget {
   const MyInvoice({super.key});

@@ -1,7 +1,7 @@
-# Firebase Configuration Guide for Kaluu Express Cargo
+# Firebase Configuration Guide for Kaluu/Bozen Cargo
 
 ## Overview
-This guide explains how to set up Firebase Cloud Messaging (FCM) for push notifications in your Kaluu Express Cargo app.
+This guide explains how to set up Firebase Cloud Messaging (FCM) for push notifications in your Kaluu/Bozen Cargo app.
 
 ## Prerequisites
 1. A Google account
@@ -11,7 +11,7 @@ This guide explains how to set up Firebase Cloud Messaging (FCM) for push notifi
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add project"
-3. Name it "Kaluu Express Cargo" or similar
+3. Name it "Kaluu/Bozen Cargo" or similar
 4. Follow the setup wizard
 
 ## Step 2: Add Android App to Firebase

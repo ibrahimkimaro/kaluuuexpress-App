@@ -39,7 +39,7 @@ class MessagesPage extends StatelessWidget {
                     ),
                     _buildMessageItem(
                       'System',
-                      'Welcome to Kaluu Express Cargo!',
+                      'Welcome to Kaluu/Bozen Cargo!',
                       '2 days ago',
                       false,
                     ),
@@ -63,14 +63,14 @@ class MessagesPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: unread
-            ? const Color(0xFF1565C0).withOpacity(0.05)
-            : Colors.white,
+        color:
+            unread ? const Color(0xFF1565C0).withOpacity(0.05) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: unread
-              ? const Color(0xFF1565C0).withOpacity(0.3)
-              : Colors.grey[200]!,
+          color:
+              unread
+                  ? const Color(0xFF1565C0).withOpacity(0.3)
+                  : Colors.grey[200]!,
         ),
       ),
       child: Row(

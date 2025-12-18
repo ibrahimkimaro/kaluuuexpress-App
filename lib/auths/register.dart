@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:kaluu_Epreess_Cargo/auths/api_service.dart';
+import 'package:kaluu_bozen_cargo/auths/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
+import 'package:kaluu_bozen_cargo/auths/auth_controller.dart';
+import 'package:kaluu_bozen_cargo/screeens/screenNavigation.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

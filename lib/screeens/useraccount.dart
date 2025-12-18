@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/editProfile.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/settings.dart';
+import 'package:kaluu_bozen_cargo/auths/auth_controller.dart';
+import 'package:kaluu_bozen_cargo/screeens/editProfile.dart';
+import 'package:kaluu_bozen_cargo/screeens/settings.dart';
 
 class UserAccountPage extends StatelessWidget {
   const UserAccountPage({Key? key}) : super(key: key);

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:kaluu_Epreess_Cargo/providers/theme_provider.dart';
+import 'package:kaluu_bozen_cargo/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:kaluu_Epreess_Cargo/auths/auth_controller.dart';
-import 'package:kaluu_Epreess_Cargo/auths/login.dart';
-import 'package:kaluu_Epreess_Cargo/auths/register.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/screenNavigation.dart';
-import 'package:kaluu_Epreess_Cargo/screeens/splash_screen.dart';
+import 'package:kaluu_bozen_cargo/auths/auth_controller.dart';
+import 'package:kaluu_bozen_cargo/auths/login.dart';
+import 'package:kaluu_bozen_cargo/auths/register.dart';
+import 'package:kaluu_bozen_cargo/screeens/screenNavigation.dart';
+import 'package:kaluu_bozen_cargo/screeens/splash_screen.dart';
 import 'package:app_links/app_links.dart';
-import 'package:kaluu_Epreess_Cargo/auths/reset_password_page.dart';
+import 'package:kaluu_bozen_cargo/auths/reset_password_page.dart';
 import 'dart:async';
 
-import 'package:kaluu_Epreess_Cargo/providers/theme_provider.dart';
+import 'package:kaluu_bozen_cargo/providers/theme_provider.dart';
 
 void main() {
   runApp(
@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'KALUU EXPRESS APP',
+          title: 'Kaluu/Bozen Cargo',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
