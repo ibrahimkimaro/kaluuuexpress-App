@@ -54,22 +54,17 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
     final Uri emailUri = Uri(
       scheme: 'mailto',
       path: 'Kaluuexpressaircargo@gmail.com',
-      query: 'subject=Support Request - Kaluu/Bozen Cargo',
+      queryParameters: {'subject': 'Support Request - Kaluu/Bozen Cargo'},
     );
 
-    try {
-      if (await canLaunchUrl(emailUri)) {
-        await launchUrl(emailUri);
-      } else {
-        Fluttertoast.showToast(
-          msg: 'Could not open email app',
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-      }
-    } catch (e) {
+    final bool launched = await launchUrl(
+      emailUri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
       Fluttertoast.showToast(
-        msg: 'Error: $e',
+        msg: 'No email app found',
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
@@ -79,19 +74,14 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
   Future<void> _launchPhone() async {
     final Uri phoneUri = Uri(scheme: 'tel', path: '+255759420034');
 
-    try {
-      if (await canLaunchUrl(phoneUri)) {
-        await launchUrl(phoneUri);
-      } else {
-        Fluttertoast.showToast(
-          msg: 'Could not open phone app',
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-      }
-    } catch (e) {
+    final bool launched = await launchUrl(
+      phoneUri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
       Fluttertoast.showToast(
-        msg: 'Error: $e',
+        msg: 'Phone app not available',
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
@@ -101,19 +91,14 @@ class _HelpAndSupportPageState extends State<HelpAndSupportPage> {
   Future<void> _launchWhatsApp() async {
     final Uri whatsappUri = Uri.parse('https://wa.me/255759420034');
 
-    try {
-      if (await canLaunchUrl(whatsappUri)) {
-        await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-      } else {
-        Fluttertoast.showToast(
-          msg: 'WhatsApp not installed',
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-      }
-    } catch (e) {
+    final bool launched = await launchUrl(
+      whatsappUri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
       Fluttertoast.showToast(
-        msg: 'Error: $e',
+        msg: 'WhatsApp not installed',
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );

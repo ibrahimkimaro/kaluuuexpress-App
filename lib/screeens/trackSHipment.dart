@@ -785,9 +785,7 @@ class ShipmentDetailsSheet extends StatelessWidget {
                         _buildDetailRow(
                           context,
                           'Name',
-                          shipment['customer_full_name'] ??
-                              shipment['customer_name'] ??
-                              'N/A',
+                          shipment['customer_name'] ?? 'N/A',
                         ),
                         _buildDetailRow(
                           context,

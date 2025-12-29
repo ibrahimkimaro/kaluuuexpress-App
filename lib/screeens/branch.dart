@@ -15,30 +15,31 @@ class _FindBranchState extends State<FindBranch> {
   final String country = 'Tanzania';
 
   Future<void> _makePhoneCall() async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
+    final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch phone dialer';
     }
   }
 
   Future<void> _sendMessage() async {
-    final Uri launchUri = Uri(scheme: 'sms', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
+    final Uri uri = Uri(scheme: 'sms', path: phoneNumber);
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch SMS app';
     }
   }
 
   Future<void> _openMaps() async {
-    // Coordinates for Kariakoo, Dar es Salaam
-    const latitude = -6.8161;
-    const longitude = 39.2803;
-    final Uri googleMapsUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    final String place = Uri.encodeComponent(
+      'Kariakoo Likoma Masasi Street Dar es Salaam Tanzania',
     );
 
-    if (await canLaunchUrl(googleMapsUri)) {
-      await launchUrl(googleMapsUri, mode: LaunchMode.externalApplication);
-    }
+    final Uri uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$place',
+    );
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
